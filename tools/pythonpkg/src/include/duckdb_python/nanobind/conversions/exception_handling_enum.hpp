@@ -16,7 +16,7 @@ enum class PythonExceptionHandling : uint8_t { FORWARD_ERROR, RETURN_NULL };
 
 using duckdb::PythonExceptionHandling;
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 static PythonExceptionHandling PythonExceptionHandlingFromString(const string &type) {
 	auto ltype = StringUtil::Lower(type);
@@ -39,7 +39,7 @@ static PythonExceptionHandling PythonExceptionHandlingFromInteger(int64_t value)
 	}
 }
 
-namespace PYBIND11_NAMESPACE {
+namespace NANOBIND_NAMESPACE {
 namespace detail {
 
 template <>
@@ -51,11 +51,11 @@ public:
 	bool load(handle src, bool convert) {
 		if (base::load(src, convert)) {
 			return true;
-		} else if (py::isinstance<py::str>(src)) {
-			tmp = PythonExceptionHandlingFromString(py::str(src));
+		} else if (nb::isinstance<nb::str>(src)) {
+			tmp = PythonExceptionHandlingFromString(nb::str(src));
 			value = &tmp;
 			return true;
-		} else if (py::isinstance<py::int_>(src)) {
+		} else if (nb::isinstance<nb::int_>(src)) {
 			tmp = PythonExceptionHandlingFromInteger(src.cast<int64_t>());
 			value = &tmp;
 			return true;
@@ -69,4 +69,4 @@ public:
 };
 
 } // namespace detail
-} // namespace PYBIND11_NAMESPACE
+} // namespace NANOBIND_NAMESPACE

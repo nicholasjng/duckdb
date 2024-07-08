@@ -10,7 +10,7 @@ using duckdb::InvalidInputException;
 using duckdb::string;
 using duckdb::StringUtil;
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 static FunctionNullHandling FunctionNullHandlingFromString(const string &type) {
 	auto ltype = StringUtil::Lower(type);
@@ -33,7 +33,7 @@ static FunctionNullHandling FunctionNullHandlingFromInteger(int64_t value) {
 	}
 }
 
-namespace PYBIND11_NAMESPACE {
+namespace NANOBIND_NAMESPACE {
 namespace detail {
 
 template <>
@@ -45,11 +45,11 @@ public:
 	bool load(handle src, bool convert) {
 		if (base::load(src, convert)) {
 			return true;
-		} else if (py::isinstance<py::str>(src)) {
-			tmp = FunctionNullHandlingFromString(py::str(src));
+		} else if (nb::isinstance<nb::str>(src)) {
+			tmp = FunctionNullHandlingFromString(nb::str(src));
 			value = &tmp;
 			return true;
-		} else if (py::isinstance<py::int_>(src)) {
+		} else if (nb::isinstance<nb::int_>(src)) {
 			tmp = FunctionNullHandlingFromInteger(src.cast<int64_t>());
 			value = &tmp;
 			return true;
@@ -63,4 +63,4 @@ public:
 };
 
 } // namespace detail
-} // namespace PYBIND11_NAMESPACE
+} // namespace NANOBIND_NAMESPACE
