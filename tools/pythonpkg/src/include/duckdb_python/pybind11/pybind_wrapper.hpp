@@ -8,6 +8,10 @@
 
 #pragma once
 
+// TODO: Port this before everything else, fix include in pyconnection.hpp
+//  1. Remove holder types
+//  2. Change namespace decl's to nanobind
+//  3. Shorthand nb instead of py (L47)
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
