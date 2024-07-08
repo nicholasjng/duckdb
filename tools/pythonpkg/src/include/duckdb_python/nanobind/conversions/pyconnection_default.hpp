@@ -12,27 +12,22 @@ namespace NANOBIND_NAMESPACE {
 namespace detail {
 
 template <>
-class type_caster<shared_ptr<DuckDBPyConnection>>
-    : public copyable_holder_caster<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>> {
+class type_caster<shared_ptr<DuckDBPyConnection>> noexcept {
 	using type = DuckDBPyConnection;
-	using holder_caster = copyable_holder_caster<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>>;
 	// This is used to generate documentation on duckdb-web
 	NB_TYPE_CASTER(shared_ptr<type>, const_name("duckdb.DuckDBPyConnection"));
 
-	bool load(handle src, bool convert) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) {
 		if (nb::none().is(src)) {
 			value = DuckDBPyConnection::DefaultConnection();
 			return true;
 		}
-		if (!holder_caster::load(src, convert)) {
-			return false;
-		}
-		value = std::move(holder);
+		value = std::move()
 		return true;
 	}
 
-	static handle cast(shared_ptr<type> base, return_value_policy rvp, handle h) {
-		return holder_caster::cast(base, rvp, h);
+	static handle from_cpp(shared_ptr<type> base, rv_policy rvp, cleanup_list *cleanup) noexcept {
+		return holder_caster::from_cpp(base, rvp, h);
 	}
 };
 

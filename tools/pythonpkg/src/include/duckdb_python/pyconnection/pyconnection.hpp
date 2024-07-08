@@ -7,12 +7,9 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-// TODO: Move this include to appropriate nanobind helper file after porting
-//  -> "duckdb_python/pybind11/pybind_wrapper.hpp"
-#include <nanobind/stl/string.h>
 #include "duckdb_python/arrow/arrow_array_stream.hpp"
 #include "duckdb.hpp"
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb/common/unordered_map.hpp"
 #include "duckdb_python/import_cache/python_import_cache.hpp"
 #include "duckdb_python/numpy/numpy_type.hpp"
@@ -21,11 +18,11 @@
 #include "duckdb_python/path_like.hpp"
 #include "duckdb/execution/operator/csv_scanner/csv_reader_options.hpp"
 #include "duckdb_python/pyfilesystem.hpp"
-#include "duckdb_python/pybind11/registered_py_object.hpp"
+#include "duckdb_python/nanobind/registered_py_object.hpp"
 #include "duckdb_python/python_dependency.hpp"
 #include "duckdb/function/scalar_function.hpp"
-#include "duckdb_python/pybind11/conversions/exception_handling_enum.hpp"
-#include "duckdb_python/pybind11/conversions/python_udf_type_enum.hpp"
+#include "duckdb_python/nanobind/conversions/exception_handling_enum.hpp"
+#include "duckdb_python/nanobind/conversions/python_udf_type_enum.hpp"
 #include "duckdb/common/shared_ptr.hpp"
 
 namespace duckdb {

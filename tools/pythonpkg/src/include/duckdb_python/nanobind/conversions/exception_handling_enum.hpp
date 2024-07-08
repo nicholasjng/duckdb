@@ -48,8 +48,8 @@ struct type_caster<PythonExceptionHandling> : public type_caster_base<PythonExce
 	PythonExceptionHandling tmp;
 
 public:
-	bool load(handle src, bool convert) {
-		if (base::load(src, convert)) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
 		} else if (nb::isinstance<nb::str>(src)) {
 			tmp = PythonExceptionHandlingFromString(nb::str(src));
@@ -63,8 +63,8 @@ public:
 		return false;
 	}
 
-	static handle cast(PythonExceptionHandling src, return_value_policy policy, handle parent) {
-		return base::cast(src, policy, parent);
+	static handle from_cpp(PythonExceptionHandling src, rv_policy policy, cleanup_list *cleanup) noexcept {
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 
