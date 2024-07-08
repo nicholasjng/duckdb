@@ -42,8 +42,8 @@ struct type_caster<FunctionNullHandling> : public type_caster_base<FunctionNullH
 	FunctionNullHandling tmp;
 
 public:
-	bool load(handle src, bool convert) {
-		if (base::load(src, convert)) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
 		} else if (nb::isinstance<nb::str>(src)) {
 			tmp = FunctionNullHandlingFromString(nb::str(src));
@@ -57,8 +57,8 @@ public:
 		return false;
 	}
 
-	static handle cast(FunctionNullHandling src, return_value_policy policy, handle parent) {
-		return base::cast(src, policy, parent);
+	static handle from_cpp(FunctionNullHandling src, rv_policy policy, cleanup_list *cleanup) noexcept {
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 
