@@ -1,32 +1,32 @@
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb/common/types.hpp"
 
 namespace duckdb {
 
 struct PyUtil {
-	static idx_t PyByteArrayGetSize(py::handle &obj) {
+	static idx_t PyByteArrayGetSize(nb::handle &obj) {
 		return PyByteArray_GET_SIZE(obj.ptr()); // NOLINT
 	}
 
-	static Py_buffer *PyMemoryViewGetBuffer(py::handle &obj) {
+	static Py_buffer *PyMemoryViewGetBuffer(nb::handle &obj) {
 		return PyMemoryView_GET_BUFFER(obj.ptr());
 	}
 
-	static bool PyUnicodeIsCompactASCII(py::handle &obj) {
+	static bool PyUnicodeIsCompactASCII(nb::handle &obj) {
 		return PyUnicode_IS_COMPACT_ASCII(obj.ptr());
 	}
 
-	static const char *PyUnicodeData(py::handle &obj) {
+	static const char *PyUnicodeData(nb::handle &obj) {
 		return const_char_ptr_cast(PyUnicode_DATA(obj.ptr()));
 	}
 
-	static char *PyUnicodeDataMutable(py::handle &obj) {
+	static char *PyUnicodeDataMutable(nb::handle &obj) {
 		return char_ptr_cast(PyUnicode_DATA(obj.ptr()));
 	}
 
-	static idx_t PyUnicodeGetLength(py::handle &obj) {
+	static idx_t PyUnicodeGetLength(nb::handle &obj) {
 		return PyUnicode_GET_LENGTH(obj.ptr());
 	}
 
@@ -38,19 +38,19 @@ struct PyUtil {
 		return PyUnicode_IS_ASCII(obj);
 	}
 
-	static int PyUnicodeKind(py::handle &obj) {
+	static int PyUnicodeKind(nb::handle &obj) {
 		return PyUnicode_KIND(obj.ptr());
 	}
 
-	static Py_UCS1 *PyUnicode1ByteData(py::handle &obj) {
+	static Py_UCS1 *PyUnicode1ByteData(nb::handle &obj) {
 		return PyUnicode_1BYTE_DATA(obj.ptr());
 	}
 
-	static Py_UCS2 *PyUnicode2ByteData(py::handle &obj) {
+	static Py_UCS2 *PyUnicode2ByteData(nb::handle &obj) {
 		return PyUnicode_2BYTE_DATA(obj.ptr());
 	}
 
-	static Py_UCS4 *PyUnicode4ByteData(py::handle &obj) {
+	static Py_UCS4 *PyUnicode4ByteData(nb::handle &obj) {
 		return PyUnicode_4BYTE_DATA(obj.ptr());
 	}
 };

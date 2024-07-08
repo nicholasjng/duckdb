@@ -1,6 +1,6 @@
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb_python/pytype.hpp"
 #include "duckdb_python/pyconnection/pyconnection.hpp"
 
@@ -11,7 +11,7 @@ public:
 	DuckDBPyTyping() = delete;
 
 public:
-	static void Initialize(py::module_ &m);
+	static void Initialize(nb::module_ &m);
 };
 
 } // namespace duckdb

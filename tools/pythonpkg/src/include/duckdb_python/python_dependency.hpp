@@ -4,8 +4,8 @@
 #include "duckdb/common/unique_ptr.hpp"
 #include "duckdb/common/case_insensitive_map.hpp"
 #include "duckdb/main/external_dependencies.hpp"
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
-#include "duckdb_python/pybind11/registered_py_object.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
+#include "duckdb_python/nanobind/registered_py_object.hpp"
 
 namespace duckdb {
 
@@ -15,7 +15,7 @@ public:
 	~PythonDependencyItem() override;
 
 public:
-	static shared_ptr<DependencyItem> Create(py::object object);
+	static shared_ptr<DependencyItem> Create(nb::object object);
 	static shared_ptr<DependencyItem> Create(unique_ptr<RegisteredObject> &&object);
 
 public:
