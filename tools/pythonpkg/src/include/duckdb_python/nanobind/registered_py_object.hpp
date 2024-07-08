@@ -1,26 +1,26 @@
 //===----------------------------------------------------------------------===//
 //                         DuckDB
 //
-// duckdb_python/pybind11/registered_py_object.hpp
+// duckdb_python/nanobind/registered_py_object.hpp
 //
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 
 namespace duckdb {
 
 class RegisteredObject {
 public:
-	explicit RegisteredObject(py::object obj_p) : obj(std::move(obj_p)) {
+	explicit RegisteredObject(nb::object obj_p) : obj(std::move(obj_p)) {
 	}
 	virtual ~RegisteredObject() {
-		py::gil_scoped_acquire acquire;
-		obj = py::none();
+		nb::gil_scoped_acquire acquire;
+		obj = nb::none();
 	}
 
-	py::object obj;
+	nb::object obj;
 };
 
 } // namespace duckdb

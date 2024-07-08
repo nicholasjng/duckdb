@@ -1,16 +1,16 @@
 //===----------------------------------------------------------------------===//
 //                         DuckDB
 //
-// duckdb_python/pybind11/python_object_container.hpp
+// duckdb_python/nanobind/python_object_container.hpp
 //
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb/common/vector.hpp"
-#include "duckdb_python/pybind11/gil_wrapper.hpp"
+#include "duckdb_python/nanobind/gil_wrapper.hpp"
 #include "duckdb/common/helper.hpp"
 
 namespace duckdb {
@@ -23,25 +23,25 @@ public:
 	}
 
 	~PythonObjectContainer() {
-		py::gil_scoped_acquire acquire;
+		nb::gil_scoped_acquire acquire;
 		py_obj.clear();
 	}
 
-	void Push(py::object &&obj) {
-		py::gil_scoped_acquire gil;
+	void Push(nb::object &&obj) {
+		nb::gil_scoped_acquire gil;
 		PushInternal(std::move(obj));
 	}
 
-	const py::object &LastAddedObject() {
+	const nb::object &LastAddedObject() {
 		D_ASSERT(!py_obj.empty());
 		return py_obj.back();
 	}
 
 private:
-	void PushInternal(py::object &&obj) {
+	void PushInternal(nb::object &&obj) {
 		py_obj.emplace_back(obj);
 	}
 
-	vector<py::object> py_obj;
+	vector<nb::object> py_obj;
 };
 } // namespace duckdb

@@ -1,29 +1,21 @@
 //===----------------------------------------------------------------------===//
 //                         DuckDB
 //
-// duckdb_python/pybind11//pybind_wrapper.hpp
+// duckdb_python/nanobind/nb_wrapper.hpp
 //
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-// TODO: Port this before everything else, fix include in pyconnection.hpp
-//  1. Remove holder types
-//  2. Change namespace decl's to nanobind
-//  3. Shorthand nb instead of py (L47)
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>
 #include "duckdb/common/vector.hpp"
 #include "duckdb/common/assert.hpp"
 #include "duckdb/common/helper.hpp"
 #include <memory>
 
-PYBIND11_DECLARE_HOLDER_TYPE(T, duckdb::unique_ptr<T>)
-PYBIND11_DECLARE_HOLDER_TYPE(T, duckdb::shared_ptr<T>)
-
-namespace pybind11 {
+namespace nanobind {
 
 namespace detail {
 
@@ -36,19 +28,20 @@ void gil_assert();
 bool is_list_like(handle obj);
 bool is_dict_like(handle obj);
 
-} // namespace pybind11
+} // namespace nanobind
 
 namespace duckdb {
 #ifdef __GNUG__
-#define PYBIND11_NAMESPACE pybind11 __attribute__((visibility("hidden")))
+#define NANOBIND_NAMESPACE nanobind __attribute__((visibility("hidden")))
 #else
-#define PYBIND11_NAMESPACE pybind11
+#define NANOBIND_NAMESPACE nanobind
 #endif
-namespace py {
+namespace nb {
 
-// We include everything from pybind11
-using namespace pybind11;
+// We include everything from nanobind
+using namespace nanobind;
 
+// TODO: Replace with nb::isinstance after confirming functional equivalence
 // But we have the option to override certain functions
 template <typename T, detail::enable_if_t<std::is_base_of<object, T>::value, int> = 0>
 bool isinstance(handle obj) {
@@ -89,7 +82,7 @@ bool try_cast(const handle &object, T &result) {
 	return true;
 }
 
-} // namespace py
+} // namespace nb
 
 template <class T, typename... ARGS>
 void DefineMethod(std::vector<const char *> aliases, T &mod, ARGS &&... args) {
