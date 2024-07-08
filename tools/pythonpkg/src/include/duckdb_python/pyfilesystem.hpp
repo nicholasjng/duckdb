@@ -2,49 +2,49 @@
 
 #include "duckdb/common/file_system.hpp"
 #include "duckdb/common/string_util.hpp"
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
-#include "duckdb_python/pybind11/gil_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
+#include "duckdb_python/nanobind/gil_wrapper.hpp"
 #include "duckdb/common/vector.hpp"
 
 namespace duckdb {
 
-class ModifiedMemoryFileSystem : public py::object {
+class ModifiedMemoryFileSystem : public nb::object {
 public:
-	using py::object::object;
-	ModifiedMemoryFileSystem(py::object object) : py::object(object) {
+	using nb::object::object;
+	ModifiedMemoryFileSystem(nb::object object) : nb::object(object) {
 	}
 
 public:
-	static bool check_(const py::handle &object) {
-		return py::isinstance(object, py::module::import("duckdb.filesystem").attr("ModifiedMemoryFileSystem"));
+	static bool check_(const nb::handle &object) {
+		return nb::isinstance(object, nb::module_::import_("duckdb.filesystem").attr("ModifiedMemoryFileSystem"));
 	}
 };
 
-class AbstractFileSystem : public py::object {
+class AbstractFileSystem : public nb::object {
 public:
-	using py::object::object;
+	using nb::object::object;
 
 public:
-	static bool check_(const py::handle &object) {
-		return py::isinstance(object, py::module::import("fsspec").attr("AbstractFileSystem"));
+	static bool check_(const nb::handle &object) {
+		return nb::isinstance(object, nb::module_::import_("fsspec").attr("AbstractFileSystem"));
 	}
 };
 
 class PythonFileHandle : public FileHandle {
 public:
-	PythonFileHandle(FileSystem &file_system, const string &path, const py::object &handle);
+	PythonFileHandle(FileSystem &file_system, const string &path, const nb::object &handle);
 	~PythonFileHandle() override;
 	void Close() override {
 		PythonGILWrapper gil;
 		handle.attr("close")();
 	}
 
-	static const py::object &GetHandle(const FileHandle &handle) {
+	static const nb::object &GetHandle(const FileHandle &handle) {
 		return ((const PythonFileHandle &)handle).handle;
 	}
 
 private:
-	py::object handle;
+	nb::object handle;
 };
 class PythonFilesystem : public FileSystem {
 private:
@@ -108,11 +108,11 @@ public:
 
 } // namespace duckdb
 
-namespace pybind11 {
+namespace nanobind {
 namespace detail {
 template <>
 struct handle_type_name<duckdb::AbstractFileSystem> {
 	static constexpr auto name = const_name("fsspec.AbstractFileSystem");
 };
 } // namespace detail
-} // namespace pybind11
+} // namespace nanobind

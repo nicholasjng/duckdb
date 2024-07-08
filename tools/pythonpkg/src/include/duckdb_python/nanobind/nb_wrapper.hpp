@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/vector.h>
+// TODO: Include at minimum unique_ptr, shared_ptr, string, list, tuple
 #include "duckdb/common/vector.hpp"
 #include "duckdb/common/assert.hpp"
 #include "duckdb/common/helper.hpp"

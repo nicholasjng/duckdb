@@ -10,7 +10,7 @@
 
 #include "duckdb_python/numpy/array_wrapper.hpp"
 #include "duckdb.hpp"
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb_python/python_objects.hpp"
 #include "duckdb/common/types.hpp"
 #include "duckdb/common/types/hugeint.hpp"
@@ -43,11 +43,11 @@ enum class PythonObjectType {
 	Value
 };
 
-PythonObjectType GetPythonObjectType(py::handle &ele);
+PythonObjectType GetPythonObjectType(nb::handle &ele);
 
-bool TryTransformPythonNumeric(Value &res, py::handle ele, const LogicalType &target_type = LogicalType::UNKNOWN);
+bool TryTransformPythonNumeric(Value &res, nb::handle ele, const LogicalType &target_type = LogicalType::UNKNOWN);
 bool DictionaryHasMapFormat(const PyDictionary &dict);
-Value TransformPythonValue(py::handle ele, const LogicalType &target_type = LogicalType::UNKNOWN,
+Value TransformPythonValue(nb::handle ele, const LogicalType &target_type = LogicalType::UNKNOWN,
                            bool nan_as_null = true);
 
 } // namespace duckdb
