@@ -46,6 +46,9 @@ namespace nb {
 // We include everything from nanobind
 using namespace nanobind;
 
+// TODO: Apply IWYU (if necessary)
+using ssize_t = Py_ssize_t;
+
 // TODO: Replace with nb::isinstance after confirming functional equivalence
 // But we have the option to override certain functions
 template <typename T, detail::enable_if_t<std::is_base_of<object, T>::value, int> = 0>
