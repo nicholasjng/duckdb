@@ -97,7 +97,7 @@ def generate():
     DEFAULT_ARGUMENT_MAP = {
         'True': 'true',
         'False': 'false',
-        'None': 'py::none()',
+        'None': 'nb::none()',
         'PythonUDFType.NATIVE': 'PythonUDFType::NATIVE',
         'PythonExceptionHandling.DEFAULT': 'PythonExceptionHandling::FORWARD_ERROR',
         'FunctionNullHandling.DEFAULT': 'FunctionNullHandling::DEFAULT_NULL_HANDLING',
@@ -112,9 +112,9 @@ def generate():
         result = []
         for arg in arguments:
             if arg['name'] == '*args':
-                # py::args() should not have a corresponding py::arg(<name>)
+                # nb::args() should not have a corresponding nb::arg(<name>)
                 continue
-            argument = f"py::arg(\"{arg['name']}\")"
+            argument = f"nb::arg(\"{arg['name']}\")"
             if 'allow_none' in arg:
                 value = str(arg['allow_none']).lower()
                 argument += f".none({value})"
@@ -160,7 +160,7 @@ def generate():
             definition += ', '.join(arguments)
         if 'kwargs' in method:
             definition += ", "
-            definition += "py::kw_only(), "
+            definition += "nb::kw_only(), "
             arguments = create_arguments(method['kwargs'])
             definition += ', '.join(arguments)
         definition += ");"

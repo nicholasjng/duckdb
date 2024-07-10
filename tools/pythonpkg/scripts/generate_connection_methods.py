@@ -7,7 +7,7 @@ JSON_PATH = os.path.join("connection_methods.json")
 PYCONNECTION_SOURCE = os.path.join("..", "src", "pyconnection.cpp")
 
 INITIALIZE_METHOD = (
-    "static void InitializeConnectionMethods(py::class_<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>> &m) {"
+    "static void InitializeConnectionMethods(nb::class_<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>> &m) {"
 )
 END_MARKER = "} // END_OF_CONNECTION_METHODS"
 
@@ -43,7 +43,7 @@ def generate():
     DEFAULT_ARGUMENT_MAP = {
         'True': 'true',
         'False': 'false',
-        'None': 'py::none()',
+        'None': 'nb::none()',
         'PythonUDFType.NATIVE': 'PythonUDFType::NATIVE',
         'PythonExceptionHandling.DEFAULT': 'PythonExceptionHandling::FORWARD_ERROR',
         'FunctionNullHandling.DEFAULT': 'FunctionNullHandling::DEFAULT_NULL_HANDLING',
@@ -57,7 +57,7 @@ def generate():
     def create_arguments(arguments) -> list:
         result = []
         for arg in arguments:
-            argument = f"py::arg(\"{arg['name']}\")"
+            argument = f"nb::arg(\"{arg['name']}\")"
             if 'allow_none' in arg:
                 value = str(arg['allow_none']).lower()
                 argument += f".none({value})"
@@ -80,7 +80,7 @@ def generate():
             definition += ', '.join(arguments)
         if 'kwargs' in method:
             definition += ", "
-            definition += "py::kw_only(), "
+            definition += "nb::kw_only(), "
             arguments = create_arguments(method['kwargs'])
             definition += ', '.join(arguments)
         definition += ");"
