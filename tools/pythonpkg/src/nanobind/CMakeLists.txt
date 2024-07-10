@@ -3,7 +3,7 @@ include_directories(${nanobind_INCLUDE_DIR})
 include_directories(${PYTHON_INCLUDE_DIRS})
 find_package(nanobind REQUIRED)
 
-// TODO: This is bad search-replace, use actual nanobind CMake APIs
+# TODO: This is bad search-replace, use actual nanobind CMake APIs
 add_library(python_nanobind OBJECT nb_wrapper.cpp)
 
 set(ALL_OBJECT_FILES

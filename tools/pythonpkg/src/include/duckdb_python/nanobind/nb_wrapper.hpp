@@ -75,7 +75,7 @@ inline bool isinstance(handle obj, handle type) {
 	}
 	const auto result = PyObject_IsInstance(obj.ptr(), type.ptr());
 	if (result == -1) {
-		throw error_already_set();
+		throw python_error();
 	}
 	return result != 0;
 }
