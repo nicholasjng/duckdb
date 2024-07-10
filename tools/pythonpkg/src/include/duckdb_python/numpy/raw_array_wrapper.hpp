@@ -8,16 +8,17 @@
 
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb.hpp"
 
 namespace duckdb {
 
+// TODO: This could be superseded by nb::ndarray ?
 struct RawArrayWrapper {
 
 	explicit RawArrayWrapper(const LogicalType &type);
 
-	py::array array;
+	nb::array array;
 	data_ptr_t data;
 	LogicalType type;
 	idx_t type_width;

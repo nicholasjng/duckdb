@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb_python/numpy/array_wrapper.hpp"
 #include "duckdb.hpp"
 
@@ -21,7 +21,7 @@ public:
 
 	void Append(DataChunk &chunk);
 
-	py::object ToArray(idx_t col_idx) {
+	nb::object ToArray(idx_t col_idx) {
 		return owned_data[col_idx].ToArray();
 	}
 	bool ToPandas() const {
