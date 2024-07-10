@@ -149,7 +149,7 @@ void DuckDBPyResult::FillNumpy(nb::dict &res, idx_t col_idx, NumpyResultConversi
 			categories_type[col_idx] = nb::module_::import_("pandas").attr("CategoricalDtype")(categories[col_idx], true);
 		}
 		// Equivalent to: pandas.Categorical.from_codes(codes=[0, 1, 0, 1], dtype=dtype)
-		res[name] = py::module_::import_("pandas")
+		res[name] = nb::module_::import_("pandas")
 		                .attr("Categorical")
 		                .attr("from_codes")(conversion.ToArray(col_idx), nb::arg("dtype") = categories_type[col_idx]);
 	} else {
