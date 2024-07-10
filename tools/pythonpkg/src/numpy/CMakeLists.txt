@@ -1,7 +1,7 @@
 # this is used for clang-tidy checks
-include_directories(${pybind11_INCLUDE_DIR})
+include_directories(${nanobind_INCLUDE_DIR})
 include_directories(${PYTHON_INCLUDE_DIRS})
-find_package(pybind11 REQUIRED)
+find_package(nanobind REQUIRED)
 
 add_library(
   python_numpy OBJECT

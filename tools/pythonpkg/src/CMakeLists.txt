@@ -1,13 +1,13 @@
 # this is used for clang-tidy checks
 
-find_package(pybind11 REQUIRED)
+find_package(nanobind REQUIRED)
 
-include_directories(${pybind11_INCLUDE_DIR})
+include_directories(${nanobind_INCLUDE_DIR})
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 add_subdirectory(pyrelation)
 add_subdirectory(pyexpression)
-add_subdirectory(pybind11)
+add_subdirectory(nanobind)
 add_subdirectory(numpy)
 add_subdirectory(native)
 add_subdirectory(jupyter)
