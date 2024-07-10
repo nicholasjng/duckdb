@@ -5,11 +5,12 @@
 
 using duckdb::Optional;
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-namespace PYBIND11_NAMESPACE {
+namespace NANOBIND_NAMESPACE {
 namespace detail {
 
+// TODO: Port this type caster
 template <class T>
 struct type_caster<Optional<T>> : public type_caster_base<Optional<T>> {
 	using base = type_caster_base<Optional<T>>;
@@ -32,4 +33,4 @@ public:
 };
 
 } // namespace detail
-} // namespace PYBIND11_NAMESPACE
+} // namespace nanobind_NAMESPACE

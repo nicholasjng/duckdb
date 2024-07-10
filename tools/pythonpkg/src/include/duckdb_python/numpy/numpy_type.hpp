@@ -9,7 +9,7 @@
 #pragma once
 
 #include "duckdb/common/types.hpp"
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 
 namespace duckdb {
 
@@ -61,7 +61,7 @@ enum class NumpyObjectType : uint8_t {
 	DICT,      //! dict of numpy arrays of shape (n,)
 };
 
-NumpyType ConvertNumpyType(const py::handle &col_type);
+NumpyType ConvertNumpyType(const nb::handle &col_type);
 LogicalType NumpyToLogicalType(const NumpyType &col_type);
 
 } // namespace duckdb

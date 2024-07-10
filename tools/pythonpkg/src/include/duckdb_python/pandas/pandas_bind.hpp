@@ -1,7 +1,7 @@
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
-#include "duckdb_python/pybind11/python_object_container.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
+#include "duckdb_python/nanobind/python_object_container.hpp"
 #include "duckdb_python/numpy/numpy_type.hpp"
 #include "duckdb/common/helper.hpp"
 #include "duckdb_python/pandas/pandas_column.hpp"
@@ -11,9 +11,9 @@ namespace duckdb {
 class ClientContext;
 
 struct RegisteredArray {
-	explicit RegisteredArray(py::array numpy_array) : numpy_array(std::move(numpy_array)) {
+	explicit RegisteredArray(nb::array numpy_array) : numpy_array(std::move(numpy_array)) {
 	}
-	py::array numpy_array;
+	nb::array numpy_array;
 };
 
 struct PandasColumnBindData {
@@ -27,7 +27,7 @@ struct PandasColumnBindData {
 };
 
 struct Pandas {
-	static void Bind(const ClientContext &config, py::handle df, vector<PandasColumnBindData> &out,
+	static void Bind(const ClientContext &config, nb::handle df, vector<PandasColumnBindData> &out,
 	                 vector<LogicalType> &return_types, vector<string> &names);
 };
 

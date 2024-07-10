@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb_python/numpy/raw_array_wrapper.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/types.hpp"
@@ -52,7 +52,7 @@ public:
 	void Resize(idx_t new_capacity);
 	void Append(idx_t current_offset, Vector &input, idx_t source_size, idx_t source_offset = 0,
 	            idx_t count = DConstants::INVALID_INDEX);
-	py::object ToArray() const;
+	nb::object ToArray() const;
 };
 
 } // namespace duckdb

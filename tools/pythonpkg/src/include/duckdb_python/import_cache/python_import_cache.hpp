@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/vector.hpp"
 #include "duckdb_python/import_cache/python_import_cache_modules.hpp"
@@ -40,10 +40,10 @@ public:
 	CollectionsCacheItem collections;
 
 public:
-	py::handle AddCache(py::object item);
+	nb::handle AddCache(nb::object item);
 
 private:
-	vector<py::object> owned_objects;
+	vector<nb::object> owned_objects;
 };
 
 } // namespace duckdb

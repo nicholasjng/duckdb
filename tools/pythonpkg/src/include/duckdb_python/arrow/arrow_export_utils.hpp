@@ -1,12 +1,12 @@
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 
 namespace duckdb {
 
 namespace pyarrow {
 
-py::object ToArrowTable(const vector<LogicalType> &types, const vector<string> &names, const py::list &batches,
+nb::object ToArrowTable(const vector<LogicalType> &types, const vector<string> &names, const nb::list &batches,
                         const ClientProperties &options);
 
 } // namespace pyarrow

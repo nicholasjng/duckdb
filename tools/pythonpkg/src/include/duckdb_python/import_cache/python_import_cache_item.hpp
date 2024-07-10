@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/vector.hpp"
 
@@ -31,8 +31,8 @@ public:
 public:
 	bool LoadSucceeded() const;
 	bool IsLoaded() const;
-	py::handle operator()(bool load = true);
-	py::handle Load(PythonImportCache &cache, py::handle source, bool load);
+	nb::handle operator()(bool load = true);
+	nb::handle Load(PythonImportCache &cache, nb::handle source, bool load);
 
 protected:
 	virtual bool IsRequired() const {
@@ -40,8 +40,8 @@ protected:
 	}
 
 private:
-	py::handle AddCache(PythonImportCache &cache, py::object object);
-	void LoadAttribute(PythonImportCache &cache, py::handle source);
+	nb::handle AddCache(PythonImportCache &cache, nb::object object);
+	void LoadAttribute(PythonImportCache &cache, nb::handle source);
 	void LoadModule(PythonImportCache &cache);
 
 private:
@@ -54,7 +54,7 @@ private:
 	//! The parent of this item (either a module or an attribute)
 	optional_ptr<PythonImportCacheItem> parent;
 	//! The stored item
-	py::handle object;
+	nb::handle object;
 };
 
 } // namespace duckdb
