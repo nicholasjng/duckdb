@@ -53,7 +53,7 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::Cast(const DuckDBPyType &type
 
 void DuckDBPyExpression::AssertCaseExpression() const {
 	if (expression->type != ExpressionType::CASE_EXPR) {
-		throw py::value_error("This method can only be used on a Expression resulting from CaseExpression or When");
+		throw nb::value_error("This method can only be used on a Expression resulting from CaseExpression or When");
 	}
 }
 
@@ -167,14 +167,14 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::IsNotNull() {
 
 // IN
 
-shared_ptr<DuckDBPyExpression> DuckDBPyExpression::In(const py::args &args) {
+shared_ptr<DuckDBPyExpression> DuckDBPyExpression::In(const nb::args &args) {
 	vector<unique_ptr<ParsedExpression>> expressions;
 	expressions.reserve(args.size() + 1);
 	expressions.push_back(GetExpression().Copy());
 
 	for (auto arg : args) {
 		shared_ptr<DuckDBPyExpression> py_expr;
-		if (!py::try_cast<shared_ptr<DuckDBPyExpression>>(arg, py_expr)) {
+		if (!nb::try_cast<shared_ptr<DuckDBPyExpression>>(arg, py_expr)) {
 			throw InvalidInputException("Please provide arguments of type Expression!");
 		}
 		auto expr = py_expr->GetExpression().Copy();
@@ -186,13 +186,13 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::In(const py::args &args) {
 
 // COALESCE
 
-shared_ptr<DuckDBPyExpression> DuckDBPyExpression::Coalesce(const py::args &args) {
+shared_ptr<DuckDBPyExpression> DuckDBPyExpression::Coalesce(const nb::args &args) {
 	vector<unique_ptr<ParsedExpression>> expressions;
 	expressions.reserve(args.size());
 
 	for (auto arg : args) {
 		shared_ptr<DuckDBPyExpression> py_expr;
-		if (!py::try_cast<shared_ptr<DuckDBPyExpression>>(arg, py_expr)) {
+		if (!nb::try_cast<shared_ptr<DuckDBPyExpression>>(arg, py_expr)) {
 			throw InvalidInputException("Please provide arguments of type Expression!");
 		}
 		auto expr = py_expr->GetExpression().Copy();
@@ -205,7 +205,7 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::Coalesce(const py::args &args
 	return make_shared_ptr<DuckDBPyExpression>(std::move(operator_expr));
 }
 
-shared_ptr<DuckDBPyExpression> DuckDBPyExpression::NotIn(const py::args &args) {
+shared_ptr<DuckDBPyExpression> DuckDBPyExpression::NotIn(const nb::args &args) {
 	auto in_expr = In(args);
 	return in_expr->Not();
 }
@@ -248,25 +248,25 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::Negate() {
 
 // Static creation methods
 
-static void PopulateExcludeList(case_insensitive_set_t &exclude, const py::list &list) {
+static void PopulateExcludeList(case_insensitive_set_t &exclude, const nb::list &list) {
 	for (auto item : list) {
-		if (py::isinstance<py::str>(item)) {
-			exclude.insert(std::string(py::str(item)));
+		if (nb::isinstance<nb::str>(item)) {
+			exclude.insert(std::string(nb::str(item)));
 			continue;
 		}
 		shared_ptr<DuckDBPyExpression> expr;
-		if (!py::try_cast(item, expr)) {
-			throw py::value_error("Items in the exclude list should either be 'str' or Expression");
+		if (!nb::try_cast(item, expr)) {
+			throw nb::value_error("Items in the exclude list should either be 'str' or Expression");
 		}
 		if (expr->GetExpression().type != ExpressionType::COLUMN_REF) {
-			throw py::value_error("Only ColumnExpressions are accepted Expression types here");
+			throw nb::value_error("Only ColumnExpressions are accepted Expression types here");
 		}
 		auto &column = expr->GetExpression().Cast<ColumnRefExpression>();
 		exclude.insert(column.GetColumnName());
 	}
 }
 
-shared_ptr<DuckDBPyExpression> DuckDBPyExpression::StarExpression(const py::list &exclude_list) {
+shared_ptr<DuckDBPyExpression> DuckDBPyExpression::StarExpression(const nb::list &exclude_list) {
 	case_insensitive_set_t exclude;
 	auto star = make_uniq<duckdb::StarExpression>();
 	PopulateExcludeList(star->exclude_list, exclude_list);
@@ -291,7 +291,7 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::ColumnExpression(const string
 	return make_shared_ptr<DuckDBPyExpression>(make_uniq<duckdb::ColumnRefExpression>(std::move(column_names)));
 }
 
-shared_ptr<DuckDBPyExpression> DuckDBPyExpression::ConstantExpression(const py::object &value) {
+shared_ptr<DuckDBPyExpression> DuckDBPyExpression::ConstantExpression(const nb::object &value) {
 	auto val = TransformPythonValue(value);
 	return InternalConstantExpression(std::move(val));
 }
@@ -360,12 +360,12 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::CaseExpression(const DuckDBPy
 }
 
 shared_ptr<DuckDBPyExpression> DuckDBPyExpression::FunctionExpression(const string &function_name,
-                                                                      const py::args &args) {
+                                                                      const nb::args &args) {
 	vector<unique_ptr<ParsedExpression>> expressions;
 	for (auto arg : args) {
 		shared_ptr<DuckDBPyExpression> py_expr;
-		if (!py::try_cast<shared_ptr<DuckDBPyExpression>>(arg, py_expr)) {
-			string actual_type = py::str(arg.get_type());
+		if (!nb::try_cast<shared_ptr<DuckDBPyExpression>>(arg, py_expr)) {
+			string actual_type = nb::str(arg.get_type());
 			throw InvalidInputException("Expected argument of type Expression, received '%s' instead", actual_type);
 		}
 		auto expr = py_expr->GetExpression().Copy();

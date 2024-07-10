@@ -235,8 +235,8 @@ static bool UpgradeType(LogicalType &left, const LogicalType &right) {
 	}
 }
 
-LogicalType PandasAnalyzer::GetListType(py::object &ele, bool &can_convert) {
-	auto size = py::len(ele);
+LogicalType PandasAnalyzer::GetListType(nb::object &ele, bool &can_convert) {
+	auto size = nb::len(ele);
 
 	if (size == 0) {
 		return LogicalType::SQLNULL;
@@ -245,7 +245,7 @@ LogicalType PandasAnalyzer::GetListType(py::object &ele, bool &can_convert) {
 	idx_t i = 0;
 	LogicalType list_type = LogicalType::SQLNULL;
 	for (auto py_val : ele) {
-		auto object = py::reinterpret_borrow<py::object>(py_val);
+		auto object = nb::borrow<nb::object>(py_val);
 		auto item_type = GetItemType(object, can_convert);
 		if (!i) {
 			list_type = item_type;
@@ -317,7 +317,7 @@ LogicalType PandasAnalyzer::DictToMap(const PyDictionary &dict, bool &can_conver
 	auto keys = dict.values.attr("__getitem__")(0);
 	auto values = dict.values.attr("__getitem__")(1);
 
-	if (py::none().is(keys) || py::none().is(values)) {
+	if (nb::none().is(keys) || nb::none().is(values)) {
 		return LogicalType::MAP(LogicalTypeId::SQLNULL, LogicalTypeId::SQLNULL);
 	}
 
@@ -341,7 +341,7 @@ LogicalType PandasAnalyzer::DictToStruct(const PyDictionary &dict, bool &can_con
 		auto dict_key = dict.keys.attr("__getitem__")(i);
 
 		//! Have to already transform here because the child_list needs a string as key
-		auto key = string(py::str(dict_key));
+		auto key = string(nb::str(dict_key));
 
 		auto dict_val = dict.values.attr("__getitem__")(i);
 		auto val = GetItemType(dict_val, can_convert);
@@ -354,7 +354,7 @@ LogicalType PandasAnalyzer::DictToStruct(const PyDictionary &dict, bool &can_con
 //! e.g python lists can consist of multiple different types, which we cant communicate downwards through
 //! LogicalType's alone
 
-LogicalType PandasAnalyzer::GetItemType(py::object ele, bool &can_convert) {
+LogicalType PandasAnalyzer::GetItemType(nb::object ele, bool &can_convert) {
 	auto object_type = GetPythonObjectType(ele);
 
 	switch (object_type) {
@@ -385,14 +385,14 @@ LogicalType PandasAnalyzer::GetItemType(py::object ele, bool &can_convert) {
 	}
 	case PythonObjectType::Datetime: {
 		auto tzinfo = ele.attr("tzinfo");
-		if (!py::none().is(tzinfo)) {
+		if (!nb::none().is(tzinfo)) {
 			return LogicalType::TIMESTAMP_TZ;
 		}
 		return LogicalType::TIMESTAMP;
 	}
 	case PythonObjectType::Time: {
 		auto tzinfo = ele.attr("tzinfo");
-		if (!py::none().is(tzinfo)) {
+		if (!nb::none().is(tzinfo)) {
 			return LogicalType::TIME_TZ;
 		}
 		return LogicalType::TIME;
@@ -413,7 +413,7 @@ LogicalType PandasAnalyzer::GetItemType(py::object ele, bool &can_convert) {
 	case PythonObjectType::List:
 		return LogicalType::LIST(GetListType(ele, can_convert));
 	case PythonObjectType::Dict: {
-		PyDictionary dict = PyDictionary(py::reinterpret_borrow<py::object>(ele));
+		PyDictionary dict = PyDictionary(nb::borrow<nb::object>(ele));
 		// Assuming keys and values are the same size
 
 		if (dict.len == 0) {
@@ -461,18 +461,18 @@ uint64_t PandasAnalyzer::GetSampleIncrement(idx_t rows) {
 	return rows / sample;
 }
 
-LogicalType PandasAnalyzer::InnerAnalyze(py::object column, bool &can_convert, idx_t increment) {
-	idx_t rows = py::len(column);
+LogicalType PandasAnalyzer::InnerAnalyze(nb::object column, bool &can_convert, idx_t increment) {
+	idx_t rows = nb::len(column);
 
 	if (rows == 0) {
 		return LogicalType::SQLNULL;
 	}
 
 	// Keys are not guaranteed to start at 0 for Series, use the internal __array__ instead
-	auto pandas_module = py::module::import("pandas");
+	auto pandas_module = nb::module_::import_("pandas");
 	auto pandas_series = pandas_module.attr("core").attr("series").attr("Series");
 
-	if (py::isinstance(column, pandas_series)) {
+	if (nb::isinstance(column, pandas_series)) {
 		// TODO: check if '_values' is more portable, and behaves the same as '__array__()'
 		column = column.attr("__array__")();
 	}
@@ -498,13 +498,13 @@ LogicalType PandasAnalyzer::InnerAnalyze(py::object column, bool &can_convert, i
 	return item_type;
 }
 
-bool PandasAnalyzer::Analyze(py::object column) {
+bool PandasAnalyzer::Analyze(nb::object column) {
 	// Disable analyze
 	if (sample_size == 0) {
 		return false;
 	}
 	bool can_convert = true;
-	idx_t increment = GetSampleIncrement(py::len(column));
+	idx_t increment = GetSampleIncrement(nb::len(column));
 	LogicalType type = InnerAnalyze(column, can_convert, increment);
 
 	if (type == LogicalType::SQLNULL && increment > 1) {

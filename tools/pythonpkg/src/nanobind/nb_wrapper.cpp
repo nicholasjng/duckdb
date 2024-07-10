@@ -1,8 +1,8 @@
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb/common/exception.hpp"
 #include "duckdb_python/pyconnection/pyconnection.hpp"
 
-namespace pybind11 {
+namespace nanobind {
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 bool gil_check() {
@@ -36,4 +36,4 @@ bool is_dict_like(handle obj) {
 	return isinstance(obj, mapping);
 }
 
-} // namespace pybind11
+} // namespace nanobind

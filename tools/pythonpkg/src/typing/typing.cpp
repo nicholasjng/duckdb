@@ -3,7 +3,7 @@
 
 namespace duckdb {
 
-static void DefineBaseTypes(py::handle &m) {
+static void DefineBaseTypes(nb::handle &m) {
 	m.attr("SQLNULL") = make_shared_ptr<DuckDBPyType>(LogicalType::SQLNULL);
 	m.attr("BOOLEAN") = make_shared_ptr<DuckDBPyType>(LogicalType::BOOLEAN);
 	m.attr("TINYINT") = make_shared_ptr<DuckDBPyType>(LogicalType::TINYINT);
@@ -38,7 +38,7 @@ static void DefineBaseTypes(py::handle &m) {
 	m.attr("INTERVAL") = make_shared_ptr<DuckDBPyType>(LogicalType::INTERVAL);
 }
 
-void DuckDBPyTyping::Initialize(py::module_ &parent) {
+void DuckDBPyTyping::Initialize(nb::module_ &parent) {
 	auto m = parent.def_submodule("typing", "This module contains classes and methods related to typing");
 	DuckDBPyType::Initialize(m);
 

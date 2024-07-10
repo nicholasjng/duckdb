@@ -1,4 +1,4 @@
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 
 #include "duckdb/common/atomic.hpp"
 #include "duckdb/common/vector.hpp"
@@ -10,14 +10,14 @@
 #include "duckdb_python/pyrelation.hpp"
 #include "duckdb_python/expression/pyexpression.hpp"
 #include "duckdb_python/pyresult.hpp"
-#include "duckdb_python/pybind11/exceptions.hpp"
+#include "duckdb_python/nanobind/exceptions.hpp"
 #include "duckdb_python/typing.hpp"
 #include "duckdb_python/functional.hpp"
-#include "duckdb_python/pybind11/conversions/pyconnection_default.hpp"
+#include "duckdb_python/nanobind/conversions/pyconnection_default.hpp"
 #include "duckdb/common/box_renderer.hpp"
 #include "duckdb/function/function.hpp"
-#include "duckdb_python/pybind11/conversions/exception_handling_enum.hpp"
-#include "duckdb_python/pybind11/conversions/python_udf_type_enum.hpp"
+#include "duckdb_python/nanobind/conversions/exception_handling_enum.hpp"
+#include "duckdb_python/nanobind/conversions/python_udf_type_enum.hpp"
 #include "duckdb/common/enums/statement_type.hpp"
 
 #include "duckdb.hpp"
@@ -26,7 +26,7 @@
 #define DUCKDB_PYTHON_LIB_NAME duckdb
 #endif
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace duckdb {
 
@@ -1061,7 +1061,7 @@ static void RegisterExpectedResultType(py::handle &m) {
 	expected_return_type.export_values();
 }
 
-PYBIND11_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
+NB_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
 	py::enum_<duckdb::ExplainType>(m, "ExplainType")
 	    .value("STANDARD", duckdb::ExplainType::EXPLAIN_STANDARD)
 	    .value("ANALYZE", duckdb::ExplainType::EXPLAIN_ANALYZE)
