@@ -190,7 +190,7 @@ struct StringConvert {
 		// based on the max codepoint, we construct the result string
 		auto result = PyUnicode_New(start_pos + codepoint_count, max_codepoint);
 		// based on the resulting unicode kind, we fill in the code points
-		auto result_handle = py::handle(result);
+		auto result_handle = nb::handle(result);
 		auto kind = PyUtil::PyUnicodeKind(result_handle);
 		switch (kind) {
 		case PyUnicode_1BYTE_KIND:
@@ -228,7 +228,7 @@ struct StringConvert {
 		// no unicode: fast path
 		// directly construct the string and memcpy it
 		auto result = PyUnicode_New(len, 127);
-		auto result_handle = py::handle(result);
+		auto result_handle = nb::handle(result);
 		auto target_data = PyUtil::PyUnicodeDataMutable(result_handle);
 		memcpy(target_data, data, len);
 		return result;
@@ -277,7 +277,7 @@ struct UUIDConvert {
 	static PyObject *ConvertValue(hugeint_t val, NumpyAppendData &append_data) {
 		(void)append_data;
 		auto &import_cache = *DuckDBPyConnection::ImportCache();
-		py::handle h = import_cache.uuid.UUID()(UUID::ToString(val)).release();
+		nb::handle h = import_cache.uuid.UUID()(UUID::ToString(val)).release();
 		return h.ptr();
 	}
 
@@ -288,7 +288,7 @@ struct UUIDConvert {
 	}
 };
 
-static py::object InternalCreateList(Vector &input, idx_t total_size, idx_t offset, idx_t size,
+static nb::object InternalCreateList(Vector &input, idx_t total_size, idx_t offset, idx_t size,
                                      NumpyAppendData &append_data) {
 	// Initialize the array we'll append the list data to
 	auto &type = input.GetType();
@@ -301,7 +301,7 @@ static py::object InternalCreateList(Vector &input, idx_t total_size, idx_t offs
 }
 
 struct ListConvert {
-	static py::object ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
+	static nb::object ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
 		auto &client_properties = append_data.client_properties;
 		auto &list_data = append_data.idata;
 
@@ -321,7 +321,7 @@ struct ListConvert {
 };
 
 struct ArrayConvert {
-	static py::object ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
+	static nb::object ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
 		auto &array_data = append_data.idata;
 
 		// Get the list entry information from the parent
@@ -341,10 +341,10 @@ struct ArrayConvert {
 };
 
 struct StructConvert {
-	static py::dict ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
+	static nb::dict ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
 		auto &client_properties = append_data.client_properties;
 
-		py::dict py_struct;
+		nb::dict py_struct;
 		auto val = input.GetValue(chunk_offset);
 		auto &child_types = StructType::GetChildTypes(input.GetType());
 		auto &struct_children = StructValue::GetChildren(val);
@@ -360,7 +360,7 @@ struct StructConvert {
 };
 
 struct UnionConvert {
-	static py::object ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
+	static nb::object ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
 		auto &client_properties = append_data.client_properties;
 		auto val = input.GetValue(chunk_offset);
 		auto value = UnionValue::GetValue(val);
@@ -370,7 +370,7 @@ struct UnionConvert {
 };
 
 struct MapConvert {
-	static py::dict ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
+	static nb::dict ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
 		auto &client_properties = append_data.client_properties;
 		auto val = input.GetValue(chunk_offset);
 		return PythonObject::FromValue(val, input.GetType(), client_properties);
@@ -513,7 +513,7 @@ static bool ConvertNested(NumpyAppendData &append_data) {
 			idx_t src_idx = idata.sel->get_index(index);
 			idx_t offset = target_offset + i;
 			if (!idata.validity.RowIsValidUnsafe(src_idx)) {
-				out_ptr[offset] = py::none();
+				out_ptr[offset] = nb::none();
 				requires_mask = true;
 				target_mask[offset] = true;
 			} else {
@@ -735,19 +735,19 @@ void ArrayWrapper::Append(idx_t current_offset, Vector &input, idx_t source_size
 		may_have_null = ConvertColumn<string_t, PyObject *, duckdb_py_convert::BitConvert>(append_data);
 		break;
 	case LogicalTypeId::LIST:
-		may_have_null = ConvertNested<py::object, duckdb_py_convert::ListConvert>(append_data);
+		may_have_null = ConvertNested<nb::object, duckdb_py_convert::ListConvert>(append_data);
 		break;
 	case LogicalTypeId::ARRAY:
-		may_have_null = ConvertNested<py::object, duckdb_py_convert::ArrayConvert>(append_data);
+		may_have_null = ConvertNested<nb::object, duckdb_py_convert::ArrayConvert>(append_data);
 		break;
 	case LogicalTypeId::MAP:
-		may_have_null = ConvertNested<py::object, duckdb_py_convert::MapConvert>(append_data);
+		may_have_null = ConvertNested<nb::object, duckdb_py_convert::MapConvert>(append_data);
 		break;
 	case LogicalTypeId::UNION:
-		may_have_null = ConvertNested<py::object, duckdb_py_convert::UnionConvert>(append_data);
+		may_have_null = ConvertNested<nb::object, duckdb_py_convert::UnionConvert>(append_data);
 		break;
 	case LogicalTypeId::STRUCT:
-		may_have_null = ConvertNested<py::object, duckdb_py_convert::StructConvert>(append_data);
+		may_have_null = ConvertNested<nb::object, duckdb_py_convert::StructConvert>(append_data);
 		break;
 	case LogicalTypeId::UUID:
 		may_have_null = ConvertColumn<hugeint_t, PyObject *, duckdb_py_convert::UUIDConvert>(append_data);
@@ -763,7 +763,7 @@ void ArrayWrapper::Append(idx_t current_offset, Vector &input, idx_t source_size
 	mask->count += count;
 }
 
-py::object ArrayWrapper::ToArray() const {
+nb::object ArrayWrapper::ToArray() const {
 	D_ASSERT(data->array && mask->array);
 	data->Resize(data->count);
 	if (!requires_mask) {
@@ -775,7 +775,7 @@ py::object ArrayWrapper::ToArray() const {
 	auto nullmask = std::move(mask->array);
 
 	// create masked array and return it
-	auto masked_array = py::module::import("numpy.ma").attr("masked_array")(values, nullmask);
+	auto masked_array = nb::module_::import_("numpy.ma").attr("masked_array")(values, nullmask);
 	return masked_array;
 }
 

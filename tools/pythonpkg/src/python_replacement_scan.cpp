@@ -1,10 +1,10 @@
 #include "duckdb_python/python_replacement_scan.hpp"
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb/main/client_properties.hpp"
 #include "duckdb_python/numpy/numpy_type.hpp"
 #include "duckdb/parser/tableref/table_function_ref.hpp"
 #include "duckdb_python/pyconnection/pyconnection.hpp"
-#include "duckdb_python/pybind11/dataframe.hpp"
+#include "duckdb_python/nanobind/dataframe.hpp"
 #include "duckdb/parser/expression/constant_expression.hpp"
 #include "duckdb/parser/expression/function_expression.hpp"
 #include "duckdb/common/typedefs.hpp"
@@ -14,7 +14,7 @@
 
 namespace duckdb {
 
-static void CreateArrowScan(const string &name, py::object entry, TableFunctionRef &table_function,
+static void CreateArrowScan(const string &name, nb::object entry, TableFunctionRef &table_function,
                             vector<unique_ptr<ParsedExpression>> &children, ClientProperties &client_properties) {
 	auto stream_factory = make_uniq<PythonTableArrowArrayStreamFactory>(entry.ptr(), client_properties);
 	auto stream_factory_produce = PythonTableArrowArrayStreamFactory::Produce;
@@ -55,7 +55,7 @@ unique_ptr<TableRef> PythonReplacementScan::ReplacementObject(const py::object &
 	return replacement;
 }
 
-unique_ptr<TableRef> PythonReplacementScan::TryReplacementObject(const py::object &entry, const string &name,
+unique_ptr<TableRef> PythonReplacementScan::TryReplacementObject(const nb::object &entry, const string &name,
                                                                  ClientContext &context) {
 	auto client_properties = context.GetClientProperties();
 	auto table_function = make_uniq<TableFunctionRef>();
@@ -78,7 +78,7 @@ unique_ptr<TableRef> PythonReplacementScan::TryReplacementObject(const py::objec
 	} else if (DuckDBPyConnection::IsAcceptedArrowObject(entry)) {
 		CreateArrowScan(name, entry, *table_function, children, client_properties);
 	} else if (DuckDBPyRelation::IsRelation(entry)) {
-		auto pyrel = py::cast<DuckDBPyRelation *>(entry);
+		auto pyrel = nb::cast<DuckDBPyRelation *>(entry);
 		if (!pyrel->CanBeRegisteredBy(context)) {
 			throw InvalidInputException(
 			    "Python Object \"%s\" of type \"DuckDBPyRelation\" not suitable for replacement scan.\nThe object was "
@@ -102,7 +102,7 @@ unique_ptr<TableRef> PythonReplacementScan::TryReplacementObject(const py::objec
 		CreateArrowScan(name, arrow_dataset, *table_function, children, client_properties);
 	} else if ((numpytype = DuckDBPyConnection::IsAcceptedNumpyObject(entry)) != NumpyObjectType::INVALID) {
 		string name = "np_" + StringUtil::GenerateRandomName();
-		py::dict data; // we will convert all the supported format to dict{"key": np.array(value)}.
+		nb::dict data; // we will convert all the supported format to dict{"key": np.array(value)}.
 		size_t idx = 0;
 		switch (numpytype) {
 		case NumpyObjectType::NDARRAY1D:
@@ -110,20 +110,20 @@ unique_ptr<TableRef> PythonReplacementScan::TryReplacementObject(const py::objec
 			break;
 		case NumpyObjectType::NDARRAY2D:
 			idx = 0;
-			for (auto item : py::cast<py::array>(entry)) {
+			for (auto item : nb::cast<nb::array>(entry)) {
 				data[("column" + std::to_string(idx)).c_str()] = item;
 				idx++;
 			}
 			break;
 		case NumpyObjectType::LIST:
 			idx = 0;
-			for (auto item : py::cast<py::list>(entry)) {
+			for (auto item : nb::cast<nb::list>(entry)) {
 				data[("column" + std::to_string(idx)).c_str()] = item;
 				idx++;
 			}
 			break;
 		case NumpyObjectType::DICT:
-			data = py::cast<py::dict>(entry);
+			data = nb::cast<nb::dict>(entry);
 			break;
 		default:
 			throw NotImplementedException("Unsupported Numpy object");
@@ -142,19 +142,19 @@ unique_ptr<TableRef> PythonReplacementScan::TryReplacementObject(const py::objec
 	return std::move(table_function);
 }
 
-static bool IsBuiltinFunction(const py::object &object) {
+static bool IsBuiltinFunction(const nb::object &object) {
 	auto &import_cache_py = *DuckDBPyConnection::ImportCache();
-	return py::isinstance(object, import_cache_py.types.BuiltinFunctionType());
+	return nb::isinstance(object, import_cache_py.types.BuiltinFunctionType());
 }
 
-static unique_ptr<TableRef> TryReplacement(py::dict &dict, const string &name, ClientContext &context,
-                                           py::object &current_frame) {
-	auto table_name = py::str(name);
+static unique_ptr<TableRef> TryReplacement(nb::dict &dict, const string &name, ClientContext &context,
+                                           nb::object &current_frame) {
+	auto table_name = nb::str(name);
 	if (!dict.contains(table_name)) {
 		// not present in the globals
 		return nullptr;
 	}
-	const py::object &entry = dict[table_name];
+	const nb::object &entry = dict[table_name];
 
 	if (IsBuiltinFunction(entry)) {
 		return nullptr;
@@ -162,9 +162,9 @@ static unique_ptr<TableRef> TryReplacement(py::dict &dict, const string &name, C
 
 	auto result = PythonReplacementScan::TryReplacementObject(entry, name, context);
 	if (!result) {
-		std::string location = py::cast<py::str>(current_frame.attr("f_code").attr("co_filename"));
+		std::string location = nb::cast<nb::str>(current_frame.attr("f_code").attr("co_filename"));
 		location += ":";
-		location += py::cast<py::str>(current_frame.attr("f_lineno"));
+		location += nb::cast<py::str>(current_frame.attr("f_lineno"));
 		ThrowScanFailureError(entry, name, location);
 	}
 	return result;
@@ -180,10 +180,10 @@ static unique_ptr<TableRef> ReplaceInternal(ClientContext &context, const string
 		return nullptr;
 	}
 
-	py::gil_scoped_acquire acquire;
-	auto current_frame = py::module::import("inspect").attr("currentframe")();
+	nb::gil_scoped_acquire acquire;
+	auto current_frame = nb::module_::import_("inspect").attr("currentframe")();
 
-	auto local_dict = py::reinterpret_borrow<py::dict>(current_frame.attr("f_locals"));
+	auto local_dict = nb::borrow<nb::dict>(current_frame.attr("f_locals"));
 	// search local dictionary
 	if (local_dict) {
 		auto result = TryReplacement(local_dict, table_name, context, current_frame);
@@ -192,7 +192,7 @@ static unique_ptr<TableRef> ReplaceInternal(ClientContext &context, const string
 		}
 	}
 	// search global dictionary
-	auto global_dict = py::reinterpret_borrow<py::dict>(current_frame.attr("f_globals"));
+	auto global_dict = nb::borrow<nb::dict>(current_frame.attr("f_globals"));
 	if (global_dict) {
 		auto result = TryReplacement(global_dict, table_name, context, current_frame);
 		if (result) {

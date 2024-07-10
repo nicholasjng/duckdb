@@ -1,5 +1,5 @@
 #include "duckdb/main/query_result.hpp"
-#include "duckdb_python/pybind11/pybind_wrapper.hpp"
+#include "duckdb_python/nanobind/nb_wrapper.hpp"
 #include "duckdb/function/scalar_function.hpp"
 #include "duckdb_python/pytype.hpp"
 #include "duckdb_python/pyconnection/pyconnection.hpp"
@@ -19,12 +19,12 @@
 
 namespace duckdb {
 
-static py::list ConvertToSingleBatch(vector<LogicalType> &types, vector<string> &names, DataChunk &input,
+static nb::list ConvertToSingleBatch(vector<LogicalType> &types, vector<string> &names, DataChunk &input,
                                      const ClientProperties &options) {
 	ArrowSchema schema;
 	ArrowConverter::ToArrowSchema(&schema, types, names, options);
 
-	py::list single_batch;
+	nb::list single_batch;
 	ArrowAppender appender(types, STANDARD_VECTOR_SIZE, options);
 	appender.Append(input, 0, input.size(), input.size());
 	auto array = appender.Finalize();
@@ -32,7 +32,7 @@ static py::list ConvertToSingleBatch(vector<LogicalType> &types, vector<string> 
 	return single_batch;
 }
 
-static py::object ConvertDataChunkToPyArrowTable(DataChunk &input, const ClientProperties &options) {
+static nb::object ConvertDataChunkToPyArrowTable(DataChunk &input, const ClientProperties &options) {
 	auto types = input.GetTypes();
 	vector<string> names;
 	names.reserve(types.size());
@@ -43,7 +43,7 @@ static py::object ConvertDataChunkToPyArrowTable(DataChunk &input, const ClientP
 	return pyarrow::ToArrowTable(types, names, ConvertToSingleBatch(types, names, input, options), options);
 }
 
-static void ConvertPyArrowToDataChunk(const py::object &table, Vector &out, ClientContext &context, idx_t count) {
+static void ConvertPyArrowToDataChunk(const nb::object &table, Vector &out, ClientContext &context, idx_t count) {
 
 	// Create the stream factory from the Table object
 	auto stream_factory = make_uniq<PythonTableArrowArrayStreamFactory>(table.ptr(), context.GetClientProperties());
@@ -107,10 +107,10 @@ static scalar_function_t CreateVectorizedFunction(PyObject *function, PythonExce
 	// Through the capture of the lambda, we have access to the function pointer
 	// We just need to make sure that it doesn't get garbage collected
 	scalar_function_t func = [=](DataChunk &input, ExpressionState &state, Vector &result) -> void {
-		py::gil_scoped_acquire gil;
+		nb::gil_scoped_acquire gil;
 
 		// owning references
-		py::object python_object;
+		nb::object python_object;
 		// Convert the input datachunk to pyarrow
 		ClientProperties options;
 
@@ -120,7 +120,7 @@ static scalar_function_t CreateVectorizedFunction(PyObject *function, PythonExce
 		}
 
 		auto pyarrow_table = ConvertDataChunkToPyArrowTable(input, options);
-		py::tuple column_list = pyarrow_table.attr("columns");
+		nb::tuple column_list = pyarrow_table.attr("columns");
 
 		auto count = input.size();
 
@@ -128,28 +128,28 @@ static scalar_function_t CreateVectorizedFunction(PyObject *function, PythonExce
 		auto ret = PyObject_CallObject(function, column_list.ptr());
 		if (ret == nullptr && PyErr_Occurred()) {
 			if (exception_handling == PythonExceptionHandling::FORWARD_ERROR) {
-				auto exception = py::error_already_set();
+				auto exception = nb::python_error();
 				throw InvalidInputException("Python exception occurred while executing the UDF: %s", exception.what());
 			} else if (exception_handling == PythonExceptionHandling::RETURN_NULL) {
 				PyErr_Clear();
-				python_object = py::module_::import("pyarrow").attr("nulls")(count);
+				python_object = nb::module_::import_("pyarrow").attr("nulls")(count);
 			} else {
 				throw NotImplementedException("Exception handling type not implemented");
 			}
 		} else {
-			python_object = py::reinterpret_steal<py::object>(ret);
+			python_object = nb::steal<nb::object>(ret);
 		}
-		if (!py::isinstance(python_object, py::module_::import("pyarrow").attr("lib").attr("Table"))) {
+		if (!nb::isinstance(python_object, nb::module_::import_("pyarrow").attr("lib").attr("Table"))) {
 			// Try to convert into a table
-			py::list single_array(1);
-			py::list single_name(1);
+			nb::list single_array(1);
+			nb::list single_name(1);
 
 			single_array[0] = python_object;
 			single_name[0] = "c0";
 			try {
-				python_object = py::module_::import("pyarrow").attr("lib").attr("Table").attr("from_arrays")(
-				    single_array, py::arg("names") = single_name);
-			} catch (py::error_already_set &) {
+				python_object = nb::module_::import_("pyarrow").attr("lib").attr("Table").attr("from_arrays")(
+				    single_array, nb::arg("names") = single_name);
+			} catch (nb::python_error &) {
 				throw InvalidInputException("Could not convert the result into an Arrow Table");
 			}
 		}
@@ -168,15 +168,15 @@ static scalar_function_t CreateNativeFunction(PyObject *function, PythonExceptio
 	// Through the capture of the lambda, we have access to the function pointer
 	// We just need to make sure that it doesn't get garbage collected
 	scalar_function_t func = [=](DataChunk &input, ExpressionState &state, Vector &result) -> void { // NOLINT
-		py::gil_scoped_acquire gil;
+		nb::gil_scoped_acquire gil;
 
 		// owning references
-		vector<py::object> python_objects;
+		vector<nb::object> python_objects;
 		vector<PyObject *> python_results;
 		python_results.resize(input.size());
 		for (idx_t row = 0; row < input.size(); row++) {
 
-			auto bundled_parameters = py::tuple((int)input.ColumnCount());
+			auto bundled_parameters = nb::tuple((int)input.ColumnCount());
 			for (idx_t i = 0; i < input.ColumnCount(); i++) {
 				// Fill the tuple with the arguments for this row
 				auto &column = input.data[i];
@@ -188,7 +188,7 @@ static scalar_function_t CreateNativeFunction(PyObject *function, PythonExceptio
 			auto ret = PyObject_CallObject(function, bundled_parameters.ptr());
 			if (ret == nullptr && PyErr_Occurred()) {
 				if (exception_handling == PythonExceptionHandling::FORWARD_ERROR) {
-					auto exception = py::error_already_set();
+					auto exception = nb::python_error();
 					throw InvalidInputException("Python exception occurred while executing the UDF: %s",
 					                            exception.what());
 				} else if (exception_handling == PythonExceptionHandling::RETURN_NULL) {
@@ -198,7 +198,7 @@ static scalar_function_t CreateNativeFunction(PyObject *function, PythonExceptio
 					throw NotImplementedException("Exception handling type not implemented");
 				}
 			}
-			python_objects.push_back(py::reinterpret_steal<py::object>(ret));
+			python_objects.push_back(nb::steal<nb::object>(ret));
 			python_results[row] = ret;
 		}
 
@@ -262,15 +262,15 @@ public:
 		return_type = type->Type();
 	}
 
-	void OverrideParameters(const py::object &parameters_p) {
-		if (py::none().is(parameters_p)) {
+	void OverrideParameters(const nb::object &parameters_p) {
+		if (nb::none().is(parameters_p)) {
 			return;
 		}
-		if (!py::isinstance<py::list>(parameters_p)) {
+		if (!nb::isinstance<nb::list>(parameters_p)) {
 			throw InvalidInputException("Either leave 'parameters' empty, or provide a list of DuckDBPyType objects");
 		}
 
-		auto params = py::list(parameters_p);
+		auto params = nb::list(parameters_p);
 		if (params.size() != param_count) {
 			throw InvalidInputException("%d types provided, but the provided function takes %d parameters",
 			                            params.size(), param_count);
@@ -283,43 +283,43 @@ public:
 		}
 		idx_t i = 0;
 		for (auto &param : params) {
-			auto type = py::cast<shared_ptr<DuckDBPyType>>(param);
+			auto type = nb::cast<shared_ptr<DuckDBPyType>>(param);
 			parameters[i++] = type->Type();
 		}
 	}
 
-	py::object GetSignature(const py::object &udf) {
+	nb::object GetSignature(const nb::object &udf) {
 		const int32_t PYTHON_3_10_HEX = 0x030a00f0;
 		auto python_version = PY_VERSION_HEX;
 
-		auto signature_func = py::module_::import("inspect").attr("signature");
+		auto signature_func = nb::module_::import_("inspect").attr("signature");
 		if (python_version >= PYTHON_3_10_HEX) {
-			return signature_func(udf, py::arg("eval_str") = true);
+			return signature_func(udf, nb::arg("eval_str") = true);
 		} else {
 			return signature_func(udf);
 		}
 	}
 
-	void AnalyzeSignature(const py::object &udf) {
+	void AnalyzeSignature(const nb::object &udf) {
 		auto signature = GetSignature(udf);
 		auto sig_params = signature.attr("parameters");
 		auto return_annotation = signature.attr("return_annotation");
-		if (!py::none().is(return_annotation)) {
+		if (!nb::none().is(return_annotation)) {
 			shared_ptr<DuckDBPyType> pytype;
-			if (py::try_cast<shared_ptr<DuckDBPyType>>(return_annotation, pytype)) {
+			if (nb::try_cast<shared_ptr<DuckDBPyType>>(return_annotation, pytype)) {
 				return_type = pytype->Type();
 			}
 		}
-		param_count = py::len(sig_params);
+		param_count = nb::len(sig_params);
 		parameters.reserve(param_count);
-		auto params = py::dict(sig_params);
+		auto params = nb::dict(sig_params);
 		for (auto &item : params) {
 			auto &value = item.second;
 			shared_ptr<DuckDBPyType> pytype;
-			if (py::try_cast<shared_ptr<DuckDBPyType>>(value.attr("annotation"), pytype)) {
+			if (nb::try_cast<shared_ptr<DuckDBPyType>>(value.attr("annotation"), pytype)) {
 				parameters.push_back(pytype->Type());
 			} else {
-				std::string kind = py::str(value.attr("kind"));
+				std::string kind = nb::str(value.attr("kind"));
 				auto parameter_kind = ParameterKind::FromString(kind);
 				if (parameter_kind == ParameterKind::Type::VAR_POSITIONAL) {
 					varargs = LogicalType::ANY;
@@ -329,7 +329,7 @@ public:
 		}
 	}
 
-	ScalarFunction GetFunction(const py::function &udf, PythonExceptionHandling exception_handling, bool side_effects,
+	ScalarFunction GetFunction(const nb::function &udf, PythonExceptionHandling exception_handling, bool side_effects,
 	                           const ClientProperties &client_properties) {
 
 		auto &import_cache = *DuckDBPyConnection::ImportCache();
@@ -352,8 +352,8 @@ public:
 
 } // namespace
 
-ScalarFunction DuckDBPyConnection::CreateScalarUDF(const string &name, const py::function &udf,
-                                                   const py::object &parameters,
+ScalarFunction DuckDBPyConnection::CreateScalarUDF(const string &name, const nb::function &udf,
+                                                   const nb::object &parameters,
                                                    const shared_ptr<DuckDBPyType> &return_type, bool vectorized,
                                                    FunctionNullHandling null_handling,
                                                    PythonExceptionHandling exception_handling, bool side_effects) {

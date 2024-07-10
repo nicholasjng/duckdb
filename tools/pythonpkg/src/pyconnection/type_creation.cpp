@@ -18,42 +18,42 @@ shared_ptr<DuckDBPyType> DuckDBPyConnection::ArrayType(const shared_ptr<DuckDBPy
 	return make_shared_ptr<DuckDBPyType>(array_type);
 }
 
-static child_list_t<LogicalType> GetChildList(const py::object &container) {
+static child_list_t<LogicalType> GetChildList(const nb::object &container) {
 	child_list_t<LogicalType> types;
-	if (py::isinstance<py::list>(container)) {
-		const py::list &fields = container;
+	if (nb::isinstance<nb::list>(container)) {
+		const nb::list &fields = container;
 		idx_t i = 1;
 		for (auto &item : fields) {
 			shared_ptr<DuckDBPyType> pytype;
-			if (!py::try_cast<shared_ptr<DuckDBPyType>>(item, pytype)) {
-				string actual_type = py::str(item.get_type());
+			if (!nb::try_cast<shared_ptr<DuckDBPyType>>(item, pytype)) {
+				string actual_type = nb::str(item.get_type());
 				throw InvalidInputException("object has to be a list of DuckDBPyType's, not '%s'", actual_type);
 			}
 			types.push_back(std::make_pair(StringUtil::Format("v%d", i++), pytype->Type()));
 		}
 		return types;
-	} else if (py::isinstance<py::dict>(container)) {
-		const py::dict &fields = container;
+	} else if (nb::isinstance<nb::dict>(container)) {
+		const nb::dict &fields = container;
 		for (auto &item : fields) {
 			auto &name_p = item.first;
 			auto &type_p = item.second;
-			string name = py::str(name_p);
+			string name = nb::str(name_p);
 			shared_ptr<DuckDBPyType> pytype;
-			if (!py::try_cast<shared_ptr<DuckDBPyType>>(type_p, pytype)) {
-				string actual_type = py::str(type_p.get_type());
+			if (!nb::try_cast<shared_ptr<DuckDBPyType>>(type_p, pytype)) {
+				string actual_type = nb::str(type_p.get_type());
 				throw InvalidInputException("object has to be a list of DuckDBPyType's, not '%s'", actual_type);
 			}
 			types.push_back(std::make_pair(name, pytype->Type()));
 		}
 		return types;
 	} else {
-		string actual_type = py::str(container.get_type());
+		string actual_type = nb::str(container.get_type());
 		throw InvalidInputException(
 		    "Can not construct a child list from object of type '%s', only dict/list is supported", actual_type);
 	}
 }
 
-shared_ptr<DuckDBPyType> DuckDBPyConnection::StructType(const py::object &fields) {
+shared_ptr<DuckDBPyType> DuckDBPyConnection::StructType(const nb::object &fields) {
 	child_list_t<LogicalType> types = GetChildList(fields);
 	if (types.empty()) {
 		throw InvalidInputException("Can not create an empty struct type!");
@@ -62,7 +62,7 @@ shared_ptr<DuckDBPyType> DuckDBPyConnection::StructType(const py::object &fields
 	return make_shared_ptr<DuckDBPyType>(struct_type);
 }
 
-shared_ptr<DuckDBPyType> DuckDBPyConnection::UnionType(const py::object &members) {
+shared_ptr<DuckDBPyType> DuckDBPyConnection::UnionType(const nb::object &members) {
 	child_list_t<LogicalType> types = GetChildList(members);
 
 	if (types.empty()) {
@@ -73,7 +73,7 @@ shared_ptr<DuckDBPyType> DuckDBPyConnection::UnionType(const py::object &members
 }
 
 shared_ptr<DuckDBPyType> DuckDBPyConnection::EnumType(const string &name, const shared_ptr<DuckDBPyType> &type,
-                                                      const py::list &values_p) {
+                                                      const nb::list &values_p) {
 	throw NotImplementedException("enum_type creation method is not implemented yet");
 }
 

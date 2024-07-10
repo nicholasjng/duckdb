@@ -15,7 +15,7 @@ public:
 	}
 
 public:
-	void AddFile(const py::object &object);
+	void AddFile(const nb::object &object);
 	PathLike Finalize();
 
 protected:
@@ -36,13 +36,13 @@ public:
 	vector<string> fs_files;
 };
 
-void PathLikeProcessor::AddFile(const py::object &object) {
-	if (py::isinstance<py::str>(object)) {
-		all_files.push_back(std::string(py::str(object)));
+void PathLikeProcessor::AddFile(const nb::object &object) {
+	if (nb::isinstance<nb::str>(object)) {
+		all_files.push_back(std::string(nb::str(object)));
 		return;
 	}
-	if (py::isinstance(object, import_cache.pathlib.Path())) {
-		all_files.push_back(std::string(py::str(object)));
+	if (nb::isinstance(object, import_cache.pathlib.Path())) {
+		all_files.push_back(std::string(nb::str(object)));
 		return;
 	}
 	// This is (assumed to be) a file-like object
@@ -78,14 +78,14 @@ PathLike PathLikeProcessor::Finalize() {
 	return result;
 }
 
-PathLike PathLike::Create(const py::object &object, DuckDBPyConnection &connection) {
+PathLike PathLike::Create(const nb::object &object, DuckDBPyConnection &connection) {
 	auto &import_cache = *DuckDBPyConnection::ImportCache();
 
 	PathLikeProcessor processor(connection, import_cache);
-	if (py::isinstance<py::list>(object)) {
-		auto list = py::list(object);
+	if (nb::isinstance<nb::list>(object)) {
+		auto list = nb::list(object);
 		for (auto &item : list) {
-			processor.AddFile(py::reinterpret_borrow<py::object>(item));
+			processor.AddFile(nb::borrow<nb::object>(item));
 		}
 	} else {
 		// Single object
