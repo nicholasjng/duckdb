@@ -68,17 +68,17 @@ using ssize_t = Py_ssize_t;
 // 	return obj.ptr() != nullptr;
 // }
 
-// inline bool isinstance(handle obj, handle type) {
-// 	if (type.ptr() == nullptr) {
-// 		// The type was not imported, just return false
-// 		return false;
-// 	}
-// 	const auto result = PyObject_IsInstance(obj.ptr(), type.ptr());
-// 	if (result == -1) {
-// 		throw error_already_set();
-// 	}
-// 	return result != 0;
-// }
+NB_INLINE bool isinstance(handle obj, handle type) {
+	if (type.ptr() == nullptr) {
+		// The type was not imported, just return false
+		return false;
+	}
+	const auto result = PyObject_IsInstance(obj.ptr(), type.ptr());
+	if (result == -1) {
+		throw python_error();
+	}
+	return result != 0;
+}
 
 // template <class T>
 // bool try_cast(const handle &object, T &result) {

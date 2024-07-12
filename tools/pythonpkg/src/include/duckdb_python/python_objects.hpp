@@ -41,7 +41,7 @@ public:
 
 public:
 	string ToString() const {
-		return string(nb::str(dict));
+		return string(nb::repr(dict).c_str());
 	}
 
 private:
@@ -206,7 +206,7 @@ struct PythonObject {
 template <class T>
 class Optional : public nb::object {
 public:
-	Optional(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	Optional(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
@@ -218,7 +218,7 @@ public:
 
 class FileLikeObject : public nb::object {
 public:
-	FileLikeObject(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	FileLikeObject(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
@@ -233,8 +233,9 @@ public:
 namespace nanobind {
 namespace detail {
 template <typename T>
-struct handle_type_name<duckdb::Optional<T>> {
-	static constexpr auto name = const_name("typing.Optional[") + concat(make_caster<T>::name) + const_name("]");
+struct typed_name<duckdb::Optional<T>> {
+    // TODO: Use NB_TYPING_* to make piped hints for Python 3.10+
+	static constexpr auto name = const_name("typing.Optional[") + make_caster<T>::Name + const_name("]");
 };
 } // namespace detail
 } // namespace nanobind

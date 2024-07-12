@@ -15,7 +15,7 @@ namespace duckdb {
 
 class PandasDataFrame : public nb::object {
 public:
-	PandasDataFrame(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	PandasDataFrame(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
@@ -27,7 +27,7 @@ public:
 
 class PolarsDataFrame : public nb::object {
 public:
-	PolarsDataFrame(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	PolarsDataFrame(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
@@ -41,8 +41,8 @@ public:
 namespace nanobind {
 namespace detail {
 template <>
-struct handle_type_name<duckdb::PandasDataFrame> {
-	static constexpr auto name = _("pandas.DataFrame");
+struct typed_name<duckdb::PandasDataFrame> {
+	static constexpr auto name = "pandas.DataFrame";
 };
 } // namespace detail
 } // namespace nanobind

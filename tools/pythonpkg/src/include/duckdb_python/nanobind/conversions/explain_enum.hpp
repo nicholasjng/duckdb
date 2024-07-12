@@ -43,7 +43,7 @@ struct type_caster<ExplainType> : public type_caster_base<ExplainType> {
 
 public:
 	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
-		if (base::from_python(src, flags, cleanup_list)) {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
 		} else if (nb::isinstance<nb::str>(src)) {
 			tmp = ExplainTypeFromString(nb::str(src));
@@ -58,7 +58,7 @@ public:
 	}
 
 	static handle from_cpp(ExplainType src, rv_policy policy, cleanup_list *cleanup) noexcept {
-		return base::from_cpp(src, policy, cleanup_list);
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 

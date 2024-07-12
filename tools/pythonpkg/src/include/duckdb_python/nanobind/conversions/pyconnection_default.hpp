@@ -31,8 +31,5 @@ class type_caster<shared_ptr<DuckDBPyConnection>> noexcept {
 	}
 };
 
-template <>
-struct is_holder_type<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>> : std::true_type {};
-
 } // namespace detail
 } // namespace NANOBIND_NAMESPACE
