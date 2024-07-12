@@ -10,8 +10,6 @@ using duckdb::InvalidInputException;
 using duckdb::string;
 using duckdb::StringUtil;
 
-namespace nb = nanobind;
-
 static ExplainType ExplainTypeFromString(const string &type) {
 	auto ltype = StringUtil::Lower(type);
 	if (ltype.empty() || ltype == "standard") {
@@ -32,35 +30,3 @@ static ExplainType ExplainTypeFromInteger(int64_t value) {
 		throw InvalidInputException("Unrecognized type for 'explain'");
 	}
 }
-
-namespace NANOBIND_NAMESPACE {
-namespace detail {
-
-template <>
-struct type_caster<ExplainType> : public type_caster_base<ExplainType> {
-	using base = type_caster_base<ExplainType>;
-	ExplainType tmp;
-
-public:
-	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
-		if (base::from_python(src, flags, cleanup)) {
-			return true;
-		} else if (nb::isinstance<nb::str>(src)) {
-			tmp = ExplainTypeFromString(nb::str(src));
-			value = &tmp;
-			return true;
-		} else if (nb::isinstance<nb::int_>(src)) {
-			tmp = ExplainTypeFromInteger(src.cast<int64_t>());
-			value = &tmp;
-			return true;
-		}
-		return false;
-	}
-
-	static handle from_cpp(ExplainType src, rv_policy policy, cleanup_list *cleanup) noexcept {
-		return base::from_cpp(src, policy, cleanup);
-	}
-};
-
-} // namespace detail
-} // namespace NANOBIND_NAMESPACE
