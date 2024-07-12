@@ -31,9 +31,9 @@ static void CreateArrowScan(const string &name, nb::object entry, TableFunctionR
 	table_function.external_dependency = std::move(dependency);
 }
 
-static void ThrowScanFailureError(const py::object &entry, const string &name, const string &location = "") {
+static void ThrowScanFailureError(const nb::object &entry, const string &name, const string &location = "") {
 	string error;
-	auto py_object_type = string(py::str(entry.get_type().attr("__name__")));
+	auto py_object_type = string(nb::str(entry.get_type().attr("__name__")));
 	error += StringUtil::Format("Python Object \"%s\" of type \"%s\"", name, py_object_type);
 	if (!location.empty()) {
 		error += StringUtil::Format(" found on line \"%s\"", location);
@@ -46,7 +46,7 @@ static void ThrowScanFailureError(const py::object &entry, const string &name, c
 	throw InvalidInputException(error);
 }
 
-unique_ptr<TableRef> PythonReplacementScan::ReplacementObject(const py::object &entry, const string &name,
+unique_ptr<TableRef> PythonReplacementScan::ReplacementObject(const nb::object &entry, const string &name,
                                                               ClientContext &context) {
 	auto replacement = TryReplacementObject(entry, name, context);
 	if (!replacement) {
@@ -164,7 +164,7 @@ static unique_ptr<TableRef> TryReplacement(nb::dict &dict, const string &name, C
 	if (!result) {
 		std::string location = nb::cast<nb::str>(current_frame.attr("f_code").attr("co_filename"));
 		location += ":";
-		location += nb::cast<py::str>(current_frame.attr("f_lineno"));
+		location += nb::cast<nb::str>(current_frame.attr("f_lineno"));
 		ThrowScanFailureError(entry, name, location);
 	}
 	return result;
