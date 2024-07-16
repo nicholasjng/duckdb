@@ -224,7 +224,7 @@ public:
 
 public:
 	static bool check_(const nb::handle &object) {
-		return nb::isinstance(object, nb::module_::import_("io").attr("IOBase"));
+		return nb::isinstance_python(object, nb::module_::import_("io").attr("IOBase"));
 	}
 };
 

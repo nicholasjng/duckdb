@@ -329,8 +329,8 @@ private:
 
 template <typename T>
 static bool ModuleIsLoaded() {
-	auto dict = nb::module_::import_("sys").attr("modules");
-	return dict.contains(nb::str(T::Name));
+	nb::dict modules = nb::module_::import_("sys").attr("modules");
+	return modules.contains(nb::str(T::Name));
 }
 
 } // namespace duckdb

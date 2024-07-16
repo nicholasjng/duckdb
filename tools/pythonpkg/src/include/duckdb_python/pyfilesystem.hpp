@@ -16,7 +16,7 @@ public:
 
 public:
 	static bool check_(const nb::handle &object) {
-		return nb::isinstance(object, nb::module_::import_("duckdb.filesystem").attr("ModifiedMemoryFileSystem"));
+		return nb::isinstance_python(object, nb::module_::import_("duckdb.filesystem").attr("ModifiedMemoryFileSystem"));
 	}
 };
 
@@ -26,7 +26,7 @@ public:
 
 public:
 	static bool check_(const nb::handle &object) {
-		return nb::isinstance(object, nb::module_::import_("fsspec").attr("AbstractFileSystem"));
+		return nb::isinstance_python(object, nb::module_::import_("fsspec").attr("AbstractFileSystem"));
 	}
 };
 
@@ -111,7 +111,7 @@ public:
 namespace nanobind {
 namespace detail {
 template <>
-struct handle_type_name<duckdb::AbstractFileSystem> {
+struct typed_name<duckdb::AbstractFileSystem> {
 	static constexpr auto name = const_name("fsspec.AbstractFileSystem");
 };
 } // namespace detail

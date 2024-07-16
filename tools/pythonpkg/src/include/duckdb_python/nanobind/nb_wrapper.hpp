@@ -46,29 +46,10 @@ namespace nb {
 // We include everything from nanobind
 using namespace nanobind;
 
-// TODO: Apply IWYU (if necessary)
 using ssize_t = Py_ssize_t;
 
-// TODO: Replace with nb::isinstance after confirming functional equivalence
-// But we have the option to override certain functions
-// template <typename T, detail::enable_if_t<std::is_base_of<object, T>::value, int> = 0>
-// bool isinstance(handle obj) {
-// 	return T::check_(obj);
-// }
-
-// template <typename T, detail::enable_if_t<!std::is_base_of<object, T>::value, int> = 0>
-// bool isinstance(handle obj) {
-// 	return detail::isinstance_generic(obj, typeid(T));
-// }
-
-// template <>
-// inline bool isinstance<handle>(handle) = delete;
-// template <>
-// inline bool isinstance<object>(handle obj) {
-// 	return obj.ptr() != nullptr;
-// }
-
-NB_INLINE bool isinstance(handle obj, handle type) {
+// nanobind does not have this built in.
+NB_INLINE bool isinstance_python(handle obj, handle type) {
 	if (type.ptr() == nullptr) {
 		// The type was not imported, just return false
 		return false;
@@ -79,16 +60,6 @@ NB_INLINE bool isinstance(handle obj, handle type) {
 	}
 	return result != 0;
 }
-
-// template <class T>
-// bool try_cast(const handle &object, T &result) {
-// 	try {
-// 		result = cast<T>(object);
-// 	} catch (cast_error &) {
-// 		return false;
-// 	}
-// 	return true;
-// }
 
 } // namespace nb
 

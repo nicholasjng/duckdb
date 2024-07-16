@@ -412,7 +412,7 @@ DuckDBPyConnection::RegisterScalarUDF(const string &name, const nb::callable &ud
 
 void DuckDBPyConnection::Initialize(nb::handle &m) {
 	auto connection_module =
-	    nb::class_<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>>(m, "DuckDBPyConnection", nb::module_local());
+	    nb::class_<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>>(m, "DuckDBPyConnection");
 
 	connection_module.def("__enter__", &DuckDBPyConnection::Enter)
 	    .def("__exit__", &DuckDBPyConnection::Exit, nb::arg("exc_type"), nb::arg("exc"), nb::arg("traceback"));

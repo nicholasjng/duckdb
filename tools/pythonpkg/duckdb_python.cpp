@@ -13,7 +13,6 @@
 #include "duckdb_python/nanobind/exceptions.hpp"
 #include "duckdb_python/typing.hpp"
 #include "duckdb_python/functional.hpp"
-#include "duckdb_python/nanobind/conversions/pyconnection_default.hpp"
 #include "duckdb/common/box_renderer.hpp"
 #include "duckdb/function/function.hpp"
 #include "duckdb_python/nanobind/conversions/exception_handling_enum.hpp"
@@ -43,7 +42,7 @@ static nb::list PyTokenize(const string &query) {
 	auto tokens = Parser::Tokenize(query);
 	nb::list result;
 	for (auto &token : tokens) {
-		auto tuple = nb::tuple(2);
+		auto tuple = nb::make_tuple(2);
 		tuple[0] = token.start;
 		switch (token.type) {
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_IDENTIFIER:
@@ -1113,7 +1112,7 @@ NB_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
 	      "Tokenizes a SQL string, returning a list of (position, type) tuples that can be "
 	      "used for e.g. syntax highlighting",
 	      nb::arg("query"));
-	nb::enum_<PySQLTokenType>(m, "token_type", nb::module_local())
+	nb::enum_<PySQLTokenType>(m, "token_type")
 	    .value("identifier", PySQLTokenType::PY_SQL_TOKEN_IDENTIFIER)
 	    .value("numeric_const", PySQLTokenType::PY_SQL_TOKEN_NUMERIC_CONSTANT)
 	    .value("string_const", PySQLTokenType::PY_SQL_TOKEN_STRING_CONSTANT)

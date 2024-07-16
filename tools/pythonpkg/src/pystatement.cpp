@@ -16,7 +16,7 @@ static void InitializeReadOnlyProperties(nb::class_<DuckDBPyStatement, unique_pt
 
 void DuckDBPyStatement::Initialize(nb::handle &m) {
 	auto relation_module =
-	    nb::class_<DuckDBPyStatement, unique_ptr<DuckDBPyStatement>>(m, "Statement", nb::module_local());
+	    nb::class_<DuckDBPyStatement, unique_ptr<DuckDBPyStatement>>(m, "Statement");
 	InitializeReadOnlyProperties(relation_module);
 }
 
