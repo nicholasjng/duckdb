@@ -42,29 +42,29 @@ static nb::list PyTokenize(const string &query) {
 	auto tokens = Parser::Tokenize(query);
 	nb::list result;
 	for (auto &token : tokens) {
-		auto tuple = nb::make_tuple(2);
-		tuple[0] = token.start;
+		auto start = token.start;
+		PySQLTokenType typ;
 		switch (token.type) {
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_IDENTIFIER:
-			tuple[1] = PY_SQL_TOKEN_IDENTIFIER;
+			typ = PY_SQL_TOKEN_IDENTIFIER;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_NUMERIC_CONSTANT:
-			tuple[1] = PY_SQL_TOKEN_NUMERIC_CONSTANT;
+			typ = PY_SQL_TOKEN_NUMERIC_CONSTANT;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_STRING_CONSTANT:
-			tuple[1] = PY_SQL_TOKEN_STRING_CONSTANT;
+			typ = PY_SQL_TOKEN_STRING_CONSTANT;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_OPERATOR:
-			tuple[1] = PY_SQL_TOKEN_OPERATOR;
+			typ = PY_SQL_TOKEN_OPERATOR;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_KEYWORD:
-			tuple[1] = PY_SQL_TOKEN_KEYWORD;
+			typ = PY_SQL_TOKEN_KEYWORD;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_COMMENT:
-			tuple[1] = PY_SQL_TOKEN_COMMENT;
+			typ = PY_SQL_TOKEN_COMMENT;
 			break;
 		}
-		result.append(tuple);
+		result.append(nb::make_tuple(start, typ));
 	}
 	return result;
 }
