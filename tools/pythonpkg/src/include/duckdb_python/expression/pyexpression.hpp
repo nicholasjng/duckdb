@@ -93,7 +93,7 @@ public:
 	shared_ptr<DuckDBPyExpression> Copy() const;
 
 public:
-	static shared_ptr<DuckDBPyExpression> StarExpression(const nb::list &exclude = nb::none());
+	static shared_ptr<DuckDBPyExpression> StarExpression(const nb::list &exclude);
 	static shared_ptr<DuckDBPyExpression> ColumnExpression(const string &column_name);
 	static shared_ptr<DuckDBPyExpression> ConstantExpression(const nb::object &value);
 	static shared_ptr<DuckDBPyExpression> CaseExpression(const DuckDBPyExpression &condition,

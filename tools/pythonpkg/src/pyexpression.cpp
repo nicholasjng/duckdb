@@ -251,7 +251,7 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::Negate() {
 static void PopulateExcludeList(case_insensitive_set_t &exclude, const nb::list &list) {
 	for (auto item : list) {
 		if (nb::isinstance<nb::str>(item)) {
-			exclude.insert(std::string(nb::str(item)));
+			exclude.insert(std::string(nb::str(item).c_str()));
 			continue;
 		}
 		shared_ptr<DuckDBPyExpression> expr;
@@ -268,14 +268,16 @@ static void PopulateExcludeList(case_insensitive_set_t &exclude, const nb::list 
 
 shared_ptr<DuckDBPyExpression> DuckDBPyExpression::StarExpression(const nb::list &exclude_list) {
 	case_insensitive_set_t exclude;
-	auto star = make_uniq<duckdb::StarExpression>();
+	nb::list exclude = nb::list(); // initialize with empty exclude list
+	auto star = make_uniq<duckdb::StarExpression>(exclude);
 	PopulateExcludeList(star->exclude_list, exclude_list);
 	return make_shared_ptr<DuckDBPyExpression>(std::move(star));
 }
 
 shared_ptr<DuckDBPyExpression> DuckDBPyExpression::ColumnExpression(const string &column_name) {
 	if (column_name == "*") {
-		return StarExpression();
+		nb::list exclude = nb::list();
+		return StarExpression(exclude);
 	}
 
 	auto qualified_name = QualifiedName::Parse(column_name);

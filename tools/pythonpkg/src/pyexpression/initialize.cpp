@@ -24,8 +24,6 @@ void InitializeStaticMethods(nb::module_ &m) {
 	// Star Expression
 	docs = "";
 	m.def("StarExpression", &DuckDBPyExpression::StarExpression, nb::kw_only(), nb::arg("exclude") = nb::list(), docs);
-	m.def(
-	    "StarExpression", []() { return DuckDBPyExpression::StarExpression(); }, docs);
 
 	// Function Expression
 	docs = "";

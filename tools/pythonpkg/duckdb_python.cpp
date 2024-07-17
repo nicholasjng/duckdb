@@ -859,8 +859,8 @@ static void InitializeConnectionMethods(nb::module_ &m) {
 		    }
 		    return conn->FromDF(df)->Project(args, groups);
 	    },
-	    "Project the relation object by the projection in project_expr", nb::arg("df"), nb::kw_only(),
-	    nb::arg("groups") = "", nb::arg("connection") = nb::none());
+	    "Project the relation object by the projection in project_expr", nb::arg("df"), nb::arg("args"),
+	    nb::kw_only(), nb::arg("groups") = "", nb::arg("connection") = nb::none());
 	m.def(
 	    "distinct",
 	    [](const PandasDataFrame &df, shared_ptr<DuckDBPyConnection> conn = nullptr) {
@@ -1107,7 +1107,7 @@ NB_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
 	m.def("connect", &DuckDBPyConnection::Connect,
 	      "Create a DuckDB database instance. Can take a database file name to read/write persistent data and a "
 	      "read_only flag if no changes are desired",
-	      nb::arg("database") = ":memory:", nb::arg("read_only") = false, nb::arg_v("config", nb::dict(), "None"));
+	      nb::arg("database") = ":memory:", nb::arg("read_only") = false, nb::arg("config") = nb::dict());
 	m.def("tokenize", PyTokenize,
 	      "Tokenizes a SQL string, returning a list of (position, type) tuples that can be "
 	      "used for e.g. syntax highlighting",
@@ -1122,10 +1122,7 @@ NB_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
 	    .export_values();
 
 	// we need this because otherwise we try to remove registered_dfs on shutdown when python is already dead
-	auto clean_default_connection = []() {
-		DuckDBPyConnection::Cleanup();
-	};
-	m.add_object("_clean_default_connection", nb::capsule(clean_default_connection));
+	m.def("_clean_default_connection", []() -> void * { DuckDBPyConnection::Cleanup(); });
 }
 
 } // namespace duckdb
