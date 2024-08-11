@@ -139,17 +139,11 @@ if 'DUCKDB_BUILD_UNITY' in os.environ:
     unity_build = 16
 
 try:
-    import pybind11
+    import nanobind
 except ImportError:
     raise Exception(
-        'pybind11 could not be imported. This usually means you\'re calling setup.py directly, or using a version of pip that doesn\'t support PEP517'
+        'nanobind could not be imported. This usually means you\'re calling setup.py directly, or using a version of pip that doesn\'t support PEP517'
     ) from None
-
-# speed up compilation with: -j = cpu_number() on non Windows machines
-if os.name != 'nt' and os.environ.get('DUCKDB_DISABLE_PARALLEL_COMPILE', '') != '1':
-    from pybind11.setup_helpers import ParallelCompile
-
-    ParallelCompile().install()
 
 
 def open_utf8(fpath, flags):
@@ -166,12 +160,12 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 if os.name == 'nt':
     # windows:
-    toolchain_args = ['/wd4244', '/wd4267', '/wd4200', '/wd26451', '/wd26495', '/D_CRT_SECURE_NO_WARNINGS', '/utf-8']
+    toolchain_args = ['/wd4244', '/wd4267', '/wd4200', '/wd26451', '/wd26495', '/D_CRT_SECURE_NO_WARNINGS', '/utf-8', '/std:c++17']
 else:
     # macos/linux
-    toolchain_args = ['-std=c++11', '-g0']
+    toolchain_args = ['-std=c++17', '-g0']
     if 'DUCKDEBUG' in os.environ:
-        toolchain_args = ['-std=c++11', '-Wall', '-O0', '-g']
+        toolchain_args = ['-std=c++17', '-Wall', '-O0', '-g']
 if 'DUCKDB_INSTALL_USER' in os.environ and 'install' in sys.argv:
     sys.argv.append('--user')
 
@@ -180,7 +174,7 @@ libraries = []
 if 'DUCKDB_BINARY_DIR' in os.environ:
     existing_duckdb_dir = os.environ['DUCKDB_BINARY_DIR']
 if 'DUCKDB_COMPILE_FLAGS' in os.environ:
-    toolchain_args = ['-std=c++11'] + os.environ['DUCKDB_COMPILE_FLAGS'].split()
+    toolchain_args = ['-std=c++17'] + os.environ['DUCKDB_COMPILE_FLAGS'].split()
 if 'DUCKDB_LIBS' in os.environ:
     libraries = os.environ['DUCKDB_LIBS'].split(' ')
 
@@ -191,14 +185,10 @@ if custom_platform is not None:
     define_macros.append(('DUCKDB_CUSTOM_PLATFORM', custom_platform))
 
 if platform.system() == 'Darwin':
-    toolchain_args.extend(['-stdlib=libc++', '-mmacosx-version-min=10.7'])
+    toolchain_args.extend(['-stdlib=libc++', '-mmacosx-version-min=10.14'])
 
 if platform.system() == 'Windows':
     define_macros.extend([('DUCKDB_BUILD_LIBRARY', None), ('WIN32', None)])
-
-if is_pyodide:
-    # show more useful error messages in the browser
-    define_macros.append(('PYBIND11_DETAILED_ERROR_MESSAGES', None))
 
 if 'BUILD_HTTPFS' in os.environ:
     libraries += ['crypto', 'ssl']
@@ -233,7 +223,7 @@ main_include_path = os.path.join(script_path, 'src', 'include')
 main_source_path = os.path.join(script_path, 'src')
 main_source_files = ['duckdb_python.cpp'] + list_source_files(main_source_path)
 
-include_directories = [main_include_path, pybind11.get_include(False), pybind11.get_include(True)]
+include_directories = [main_include_path, nanobind.include_dir()]
 if 'BUILD_HTTPFS' in os.environ and 'OPENSSL_ROOT_DIR' in os.environ:
     include_directories += [os.path.join(os.environ['OPENSSL_ROOT_DIR'], 'include')]
 
