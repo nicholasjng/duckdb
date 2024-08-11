@@ -9,16 +9,16 @@
 namespace duckdb {
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-bool PyGenericAlias::check_(const py::handle &object) {
+bool PyGenericAlias::check_(const nb::handle &object) {
 	if (!ModuleIsLoaded<TypesCacheItem>()) {
 		return false;
 	}
-	auto &import_cache = *DuckDBPyConnection::ImportCache();
-	return py::isinstance(object, import_cache.types.GenericAlias());
+	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	return nb::isinstance(object, import_cache.types.GenericAlias());
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
-bool PyUnionType::check_(const py::handle &object) {
+bool PyUnionType::check_(const nb::handle &object) {
 	auto types_loaded = ModuleIsLoaded<TypesCacheItem>();
 	auto typing_loaded = ModuleIsLoaded<TypingCacheItem>();
 
@@ -26,11 +26,11 @@ bool PyUnionType::check_(const py::handle &object) {
 		return false;
 	}
 
-	auto &import_cache = *DuckDBPyConnection::ImportCache();
-	if (types_loaded && py::isinstance(object, import_cache.types.UnionType())) {
+	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	if (types_loaded && nb::isinstance(object, import_cache.types.UnionType())) {
 		return true;
 	}
-	if (typing_loaded && py::isinstance(object, import_cache.typing._UnionGenericAlias())) {
+	if (typing_loaded && nb::isinstance(object, import_cache.typing._UnionGenericAlias())) {
 		return true;
 	}
 	return false;
@@ -71,18 +71,18 @@ shared_ptr<DuckDBPyType> DuckDBPyType::GetAttribute(const string &name) const {
 		} else if (is_value) {
 			return make_shared_ptr<DuckDBPyType>(MapType::ValueType(type));
 		} else {
-			throw py::attribute_error(StringUtil::Format("Tried to get a child from a map by the name of '%s', but "
+			throw nb::attribute_error(StringUtil::Format("Tried to get a child from a map by the name of '%s', but "
 			                                             "this type only has 'key' and 'value' children",
 			                                             name));
 		}
 	}
-	throw py::attribute_error(
+	throw nb::attribute_error(
 	    StringUtil::Format("Tried to get child type by the name of '%s', but this type either isn't nested, "
 	                       "or it doesn't have a child by that name",
 	                       name));
 }
 
-static LogicalType FromObject(const py::object &object);
+static LogicalType FromObject(const nb::object &object);
 
 namespace {
 enum class PythonTypeObject : uint8_t {
@@ -95,20 +95,20 @@ enum class PythonTypeObject : uint8_t {
 };
 }
 
-static PythonTypeObject GetTypeObjectType(const py::handle &type_object) {
-	if (py::isinstance<py::type>(type_object)) {
+static PythonTypeObject GetTypeObjectType(const nb::handle &type_object) {
+	if (nb::isinstance<nb::type>(type_object)) {
 		return PythonTypeObject::BASE;
 	}
-	if (py::isinstance<py::str>(type_object)) {
+	if (nb::isinstance<nb::str>(type_object)) {
 		return PythonTypeObject::STRING;
 	}
-	if (py::isinstance<PyGenericAlias>(type_object)) {
+	if (nb::isinstance<PyGenericAlias>(type_object)) {
 		return PythonTypeObject::COMPOSITE;
 	}
-	if (py::isinstance<py::dict>(type_object)) {
+	if (nb::isinstance<nb::dict>(type_object)) {
 		return PythonTypeObject::STRUCT;
 	}
-	if (py::isinstance<PyUnionType>(type_object)) {
+	if (nb::isinstance<PyUnionType>(type_object)) {
 		return PythonTypeObject::UNION;
 	}
 	return PythonTypeObject::INVALID;
@@ -122,12 +122,12 @@ static LogicalType FromString(const string &type_str, shared_ptr<DuckDBPyConnect
 	return TransformStringToLogicalType(type_str, *connection.context);
 }
 
-static bool FromNumpyType(const py::object &type, LogicalType &result) {
+static bool FromNumpyType(const nb::object &type, LogicalType &result) {
 	// Since this is a type, we have to create an instance from it first.
 	auto obj = type();
 	// We convert these to string because the underlying physical
 	// types of a numpy type aren't consistent on every platform
-	string type_str = py::str(obj.attr("dtype"));
+	string type_str = nb::str(obj.attr("dtype"));
 	if (type_str == "bool") {
 		result = LogicalType::BOOLEAN;
 	} else if (type_str == "int8") {
@@ -159,8 +159,8 @@ static bool FromNumpyType(const py::object &type, LogicalType &result) {
 	return true;
 }
 
-static LogicalType FromType(const py::type &obj) {
-	py::module_ builtins = py::module_::import("builtins");
+static LogicalType FromType(const nb::type &obj) {
+	nb::module_ builtins = nb::module_::import_("builtins");
 	if (obj.is(builtins.attr("str"))) {
 		return LogicalType::VARCHAR;
 	}
@@ -185,10 +185,10 @@ static LogicalType FromType(const py::type &obj) {
 		return result;
 	}
 
-	throw py::type_error("Could not convert from unknown 'type' to DuckDBPyType");
+	throw nb::type_error("Could not convert from unknown 'type' to DuckDBPyType");
 }
 
-static bool IsMapType(const py::tuple &args) {
+static bool IsMapType(const nb::tuple &args) {
 	if (args.size() != 2) {
 		return false;
 	}
@@ -200,34 +200,34 @@ static bool IsMapType(const py::tuple &args) {
 	return true;
 }
 
-static py::tuple FilterNones(const py::tuple &args) {
-	py::list result;
+static nb::tuple FilterNones(const nb::tuple &args) {
+	nb::list result;
 
 	for (const auto &arg : args) {
-		py::object object = py::reinterpret_borrow<py::object>(arg);
-		if (object.is(py::none().get_type())) {
+		nb::object object = nb::borrow<nb::object>(arg);
+		if (object.is(nb::none().get_type())) {
 			continue;
 		}
 		result.append(object);
 	}
-	return py::tuple(result);
+	return nb::tuple(result);
 }
 
-static LogicalType FromUnionTypeInternal(const py::tuple &args) {
+static LogicalType FromUnionTypeInternal(const nb::tuple &args) {
 	idx_t index = 1;
 	child_list_t<LogicalType> members;
 
 	for (const auto &arg : args) {
 		auto name = StringUtil::Format("u%d", index++);
-		py::object object = py::reinterpret_borrow<py::object>(arg);
+		nb::object object = nb::borrow<nb::object>(arg);
 		members.push_back(make_pair(name, FromObject(object)));
 	}
 
 	return LogicalType::UNION(std::move(members));
 }
 
-static LogicalType FromUnionType(const py::object &obj) {
-	py::tuple args = obj.attr("__args__");
+static LogicalType FromUnionType(const nb::object &obj) {
+	nb::tuple args = obj.attr("__args__");
 
 	// Optional inserts NoneType into the Union
 	// all types are nullable in DuckDB so we just filter the Nones
@@ -239,13 +239,13 @@ static LogicalType FromUnionType(const py::object &obj) {
 	return FromUnionTypeInternal(filtered_args);
 };
 
-static LogicalType FromGenericAlias(const py::object &obj) {
-	py::module_ builtins = py::module_::import("builtins");
-	py::module_ types = py::module_::import("types");
+static LogicalType FromGenericAlias(const nb::object &obj) {
+	nb::module_ builtins = nb::module_::import_("builtins");
+	nb::module_ types = nb::module_::import_("types");
 	auto generic_alias = types.attr("GenericAlias");
-	D_ASSERT(py::isinstance(obj, generic_alias));
+	D_ASSERT(nb::isinstance(obj, generic_alias));
 	auto origin = obj.attr("__origin__");
-	py::tuple args = obj.attr("__args__");
+	nb::tuple args = obj.attr("__args__");
 
 	if (origin.is(builtins.attr("list"))) {
 		if (args.size() != 1) {
@@ -260,25 +260,25 @@ static LogicalType FromGenericAlias(const py::object &obj) {
 			throw NotImplementedException("Can only create a MAP from a dict if args is formed correctly");
 		}
 	}
-	string origin_type = py::str(origin);
+	string origin_type = nb::str(origin);
 	throw InvalidInputException("Could not convert from '%s' to DuckDBPyType", origin_type);
 }
 
-static LogicalType FromDictionary(const py::object &obj) {
-	auto dict = py::reinterpret_steal<py::dict>(obj);
+static LogicalType FromDictionary(const nb::object &obj) {
+	auto dict = nb::steal<nb::dict>(obj);
 	child_list_t<LogicalType> children;
 	children.reserve(dict.size());
 	for (auto &item : dict) {
 		auto &name_p = item.first;
-		auto type_p = py::reinterpret_borrow<py::object>(item.second);
-		string name = py::str(name_p);
+		auto type_p = nb::borrow<nb::object>(item.second);
+		string name = nb::str(name_p);
 		auto type = FromObject(type_p);
 		children.push_back(std::make_pair(name, std::move(type)));
 	}
 	return LogicalType::STRUCT(std::move(children));
 }
 
-static LogicalType FromObject(const py::object &object) {
+static LogicalType FromObject(const nb::object &object) {
 	auto object_type = GetTypeObjectType(object);
 	switch (object_type) {
 	case PythonTypeObject::BASE: {
@@ -294,54 +294,54 @@ static LogicalType FromObject(const py::object &object) {
 		return FromUnionType(object);
 	}
 	case PythonTypeObject::STRING: {
-		auto string_value = std::string(py::str(object));
+		auto string_value = std::string(nb::str(object));
 		return FromString(string_value, nullptr);
 	}
 	default: {
-		string actual_type = py::str(object.get_type());
+		string actual_type = nb::str(object.get_type());
 		throw NotImplementedException("Could not convert from object of type '%s' to DuckDBPyType", actual_type);
 	}
 	}
 }
 
-void DuckDBPyType::Initialize(py::handle &m) {
-	auto type_module = py::class_<DuckDBPyType, shared_ptr<DuckDBPyType>>(m, "DuckDBPyType", py::module_local());
+void DuckDBPyType::Initialize(nb::handle &m) {
+	auto type_module = nb::class_<DuckDBPyType, shared_ptr<DuckDBPyType>>(m, "DuckDBPyType", nb::module_local());
 
 	type_module.def("__repr__", &DuckDBPyType::ToString, "Stringified representation of the type object");
-	type_module.def("__eq__", &DuckDBPyType::Equals, "Compare two types for equality", py::arg("other"));
-	type_module.def("__eq__", &DuckDBPyType::EqualsString, "Compare two types for equality", py::arg("other"));
+	type_module.def("__eq__", &DuckDBPyType::Equals, "Compare two types for equality", nb::arg("other"));
+	type_module.def("__eq__", &DuckDBPyType::EqualsString, "Compare two types for equality", nb::arg("other"));
 	type_module.def_property_readonly("id", &DuckDBPyType::GetId);
 	type_module.def_property_readonly("children", &DuckDBPyType::Children);
-	type_module.def(py::init<>([](const string &type_str, shared_ptr<DuckDBPyConnection> connection = nullptr) {
+	type_module.def(nb::init<>([](const string &type_str, shared_ptr<DuckDBPyConnection> connection = nullptr) {
 		auto ltype = FromString(type_str, std::move(connection));
 		return make_shared_ptr<DuckDBPyType>(ltype);
 	}));
-	type_module.def(py::init<>([](const PyGenericAlias &obj) {
+	type_module.def(nb::init<>([](const PyGenericAlias &obj) {
 		auto ltype = FromGenericAlias(obj);
 		return make_shared_ptr<DuckDBPyType>(ltype);
 	}));
-	type_module.def(py::init<>([](const PyUnionType &obj) {
+	type_module.def(nb::init<>([](const PyUnionType &obj) {
 		auto ltype = FromUnionType(obj);
 		return make_shared_ptr<DuckDBPyType>(ltype);
 	}));
-	type_module.def(py::init<>([](const py::object &obj) {
+	type_module.def(nb::init<>([](const nb::object &obj) {
 		auto ltype = FromObject(obj);
 		return make_shared_ptr<DuckDBPyType>(ltype);
 	}));
-	type_module.def("__getattr__", &DuckDBPyType::GetAttribute, "Get the child type by 'name'", py::arg("name"));
-	type_module.def("__getitem__", &DuckDBPyType::GetAttribute, "Get the child type by 'name'", py::arg("name"));
+	type_module.def("__getattr__", &DuckDBPyType::GetAttribute, "Get the child type by 'name'", nb::arg("name"));
+	type_module.def("__getitem__", &DuckDBPyType::GetAttribute, "Get the child type by 'name'", nb::arg("name"));
 
-	py::implicitly_convertible<py::object, DuckDBPyType>();
-	py::implicitly_convertible<py::str, DuckDBPyType>();
-	py::implicitly_convertible<PyGenericAlias, DuckDBPyType>();
-	py::implicitly_convertible<PyUnionType, DuckDBPyType>();
+	nb::implicitly_convertible<nb::object, DuckDBPyType>();
+	nb::implicitly_convertible<nb::str, DuckDBPyType>();
+	nb::implicitly_convertible<PyGenericAlias, DuckDBPyType>();
+	nb::implicitly_convertible<PyUnionType, DuckDBPyType>();
 }
 
 string DuckDBPyType::ToString() const {
 	return type.ToString();
 }
 
-py::list DuckDBPyType::Children() const {
+nb::list DuckDBPyType::Children() const {
 
 	switch (type.id()) {
 	case LogicalTypeId::LIST:
@@ -356,25 +356,25 @@ py::list DuckDBPyType::Children() const {
 		throw InvalidInputException("This type is not nested so it doesn't have children");
 	}
 
-	py::list children;
+	nb::list children;
 	auto id = type.id();
 	if (id == LogicalTypeId::LIST) {
-		children.append(py::make_tuple("child", make_shared_ptr<DuckDBPyType>(ListType::GetChildType(type))));
+		children.append(nb::make_tuple("child", make_shared_ptr<DuckDBPyType>(ListType::GetChildType(type))));
 		return children;
 	}
 	if (id == LogicalTypeId::ARRAY) {
-		children.append(py::make_tuple("child", make_shared_ptr<DuckDBPyType>(ArrayType::GetChildType(type))));
-		children.append(py::make_tuple("size", ArrayType::GetSize(type)));
+		children.append(nb::make_tuple("child", make_shared_ptr<DuckDBPyType>(ArrayType::GetChildType(type))));
+		children.append(nb::make_tuple("size", ArrayType::GetSize(type)));
 		return children;
 	}
 	if (id == LogicalTypeId::ENUM) {
 		auto &values_insert_order = EnumType::GetValuesInsertOrder(type);
 		auto strings = FlatVector::GetData<string_t>(values_insert_order);
-		py::list strings_list;
+		nb::list strings_list;
 		for (size_t i = 0; i < EnumType::GetSize(type); i++) {
-			strings_list.append(py::str(strings[i].GetString()));
+			strings_list.append(nb::str(strings[i].GetString()));
 		}
-		children.append(py::make_tuple("values", strings_list));
+		children.append(nb::make_tuple("values", strings_list));
 		return children;
 	}
 	if (id == LogicalTypeId::STRUCT || id == LogicalTypeId::UNION) {
@@ -382,18 +382,18 @@ py::list DuckDBPyType::Children() const {
 		for (idx_t i = 0; i < struct_children.size(); i++) {
 			auto &child = struct_children[i];
 			children.append(
-			    py::make_tuple(child.first, make_shared_ptr<DuckDBPyType>(StructType::GetChildType(type, i))));
+			    nb::make_tuple(child.first, make_shared_ptr<DuckDBPyType>(StructType::GetChildType(type, i))));
 		}
 		return children;
 	}
 	if (id == LogicalTypeId::MAP) {
-		children.append(py::make_tuple("key", make_shared_ptr<DuckDBPyType>(MapType::KeyType(type))));
-		children.append(py::make_tuple("value", make_shared_ptr<DuckDBPyType>(MapType::ValueType(type))));
+		children.append(nb::make_tuple("key", make_shared_ptr<DuckDBPyType>(MapType::KeyType(type))));
+		children.append(nb::make_tuple("value", make_shared_ptr<DuckDBPyType>(MapType::ValueType(type))));
 		return children;
 	}
 	if (id == LogicalTypeId::DECIMAL) {
-		children.append(py::make_tuple("precision", DecimalType::GetWidth(type)));
-		children.append(py::make_tuple("scale", DecimalType::GetScale(type)));
+		children.append(nb::make_tuple("precision", DecimalType::GetWidth(type)));
+		children.append(nb::make_tuple("scale", DecimalType::GetScale(type)));
 		return children;
 	}
 	throw InternalException("Children is not implemented for this type");

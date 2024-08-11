@@ -33,7 +33,7 @@ public:
 	}
 
 public:
-	static void Initialize(py::module_ &m);
+	static void Initialize(nb::module_ &m);
 
 	string Type() const;
 
@@ -75,8 +75,8 @@ public:
 
 	// IN / NOT IN
 
-	shared_ptr<DuckDBPyExpression> In(const py::args &args);
-	shared_ptr<DuckDBPyExpression> NotIn(const py::args &args);
+	shared_ptr<DuckDBPyExpression> In(const nb::args &args);
+	shared_ptr<DuckDBPyExpression> NotIn(const nb::args &args);
 
 	// Order modifiers
 
@@ -93,13 +93,13 @@ public:
 	shared_ptr<DuckDBPyExpression> Copy() const;
 
 public:
-	static shared_ptr<DuckDBPyExpression> StarExpression(const py::list &exclude = py::none());
+	static shared_ptr<DuckDBPyExpression> StarExpression(const nb::list &exclude = nb::none());
 	static shared_ptr<DuckDBPyExpression> ColumnExpression(const string &column_name);
-	static shared_ptr<DuckDBPyExpression> ConstantExpression(const py::object &value);
+	static shared_ptr<DuckDBPyExpression> ConstantExpression(const nb::object &value);
 	static shared_ptr<DuckDBPyExpression> CaseExpression(const DuckDBPyExpression &condition,
 	                                                     const DuckDBPyExpression &value);
-	static shared_ptr<DuckDBPyExpression> FunctionExpression(const string &function_name, const py::args &args);
-	static shared_ptr<DuckDBPyExpression> Coalesce(const py::args &args);
+	static shared_ptr<DuckDBPyExpression> FunctionExpression(const string &function_name, const nb::args &args);
+	static shared_ptr<DuckDBPyExpression> Coalesce(const nb::args &args);
 
 public:
 	// Internal functions (not exposed to Python)

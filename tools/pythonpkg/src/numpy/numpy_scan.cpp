@@ -17,7 +17,7 @@
 namespace duckdb {
 
 template <class T>
-void ScanNumpyColumn(py::array &numpy_col, idx_t stride, idx_t offset, Vector &out, idx_t count) {
+void ScanNumpyColumn(nb::array &numpy_col, idx_t stride, idx_t offset, Vector &out, idx_t count) {
 	auto src_ptr = (T *)numpy_col.data();
 	if (stride == sizeof(T)) {
 		FlatVector::SetData(out, data_ptr_cast(src_ptr + offset));
@@ -30,7 +30,7 @@ void ScanNumpyColumn(py::array &numpy_col, idx_t stride, idx_t offset, Vector &o
 }
 
 template <class T, class V>
-void ScanNumpyCategoryTemplated(py::array &column, idx_t offset, Vector &out, idx_t count) {
+void ScanNumpyCategoryTemplated(nb::array &column, idx_t offset, Vector &out, idx_t count) {
 	auto src_ptr = (T *)column.data();
 	auto tgt_ptr = (V *)FlatVector::GetData(out);
 	auto &tgt_mask = FlatVector::Validity(out);
@@ -45,7 +45,7 @@ void ScanNumpyCategoryTemplated(py::array &column, idx_t offset, Vector &out, id
 }
 
 template <class T>
-void ScanNumpyCategory(py::array &column, idx_t count, idx_t offset, Vector &out, string &src_type) {
+void ScanNumpyCategory(nb::array &column, idx_t count, idx_t offset, Vector &out, string &src_type) {
 	if (src_type == "int8") {
 		ScanNumpyCategoryTemplated<int8_t, T>(column, offset, out, count);
 	} else if (src_type == "int16") {
@@ -333,7 +333,7 @@ void NumpyScan::Scan(PandasColumnBindData &bind_data, idx_t count, idx_t offset,
 		auto tgt_ptr = FlatVector::GetData<string_t>(out);
 		auto &out_mask = FlatVector::Validity(out);
 		unique_ptr<PythonGILWrapper> gil;
-		auto &import_cache = *DuckDBPyConnection::ImportCache();
+		auto &import_cache = *DuckDBPyConnection::import_Cache();
 
 		// Loop over every row of the arrays contents
 		auto stride = numpy_col.stride;
@@ -342,14 +342,14 @@ void NumpyScan::Scan(PandasColumnBindData &bind_data, idx_t count, idx_t offset,
 
 			// Get the pointer to the object
 			PyObject *val = src_ptr[source_idx];
-			if (!py::isinstance<py::str>(val)) {
+			if (!nb::isinstance<nb::str>(val)) {
 				if (val == Py_None) {
 					out_mask.SetInvalid(row);
 					continue;
 				}
 				if (import_cache.pandas.NaT(false)) {
 					// If pandas is imported, check if this is pandas.NaT
-					py::handle value(val);
+					nb::handle value(val);
 					if (value.is(import_cache.pandas.NaT())) {
 						out_mask.SetInvalid(row);
 						continue;
@@ -357,28 +357,28 @@ void NumpyScan::Scan(PandasColumnBindData &bind_data, idx_t count, idx_t offset,
 				}
 				if (import_cache.pandas.NA(false)) {
 					// If pandas is imported, check if this is pandas.NA
-					py::handle value(val);
+					nb::handle value(val);
 					if (value.is(import_cache.pandas.NA())) {
 						out_mask.SetInvalid(row);
 						continue;
 					}
 				}
-				if (py::isinstance<py::float_>(val) && std::isnan(PyFloat_AsDouble(val))) {
+				if (nb::isinstance<nb::float_>(val) && std::isnan(PyFloat_AsDouble(val))) {
 					out_mask.SetInvalid(row);
 					continue;
 				}
-				if (!py::isinstance<py::str>(val)) {
+				if (!nb::isinstance<nb::str>(val)) {
 					if (!gil) {
 						gil = make_uniq<PythonGILWrapper>();
 					}
-					bind_data.object_str_val.Push(std::move(py::str(val)));
+					bind_data.object_str_val.Push(std::move(nb::str(val)));
 					val = reinterpret_cast<PyObject *>(bind_data.object_str_val.LastAddedObject().ptr());
 				}
 			}
 			// Python 3 string representation:
 			// https://github.com/python/cpython/blob/3a8fdb28794b2f19f6c8464378fb8b46bce1f5f4/Include/cpython/unicodeobject.h#L79
-			py::handle val_handle(val);
-			if (!py::isinstance<py::str>(val_handle)) {
+			nb::handle val_handle(val);
+			if (!nb::isinstance<nb::str>(val_handle)) {
 				out_mask.SetInvalid(row);
 				continue;
 			}

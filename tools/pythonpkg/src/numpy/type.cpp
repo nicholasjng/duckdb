@@ -96,8 +96,8 @@ static NumpyNullableType ConvertNumpyTypeInternal(const string &col_type_str) {
 	throw NotImplementedException("Data type '%s' not recognized", col_type_str);
 }
 
-NumpyType ConvertNumpyType(const py::handle &col_type) {
-	auto col_type_str = string(py::str(col_type));
+NumpyType ConvertNumpyType(const nb::handle &col_type) {
+	auto col_type_str = string(nb::str(col_type));
 	NumpyType numpy_type;
 
 	numpy_type.type = ConvertNumpyTypeInternal(col_type_str);

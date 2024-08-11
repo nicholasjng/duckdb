@@ -8,18 +8,13 @@
 
 #pragma once
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
+#include <nanobind/nanobind.h>
 #include "duckdb/common/vector.hpp"
 #include "duckdb/common/assert.hpp"
 #include "duckdb/common/helper.hpp"
 #include <memory>
 
-PYBIND11_DECLARE_HOLDER_TYPE(T, duckdb::unique_ptr<T>)
-PYBIND11_DECLARE_HOLDER_TYPE(T, duckdb::shared_ptr<T>)
-
-namespace pybind11 {
+namespace nanobind {
 
 namespace detail {
 
@@ -32,18 +27,14 @@ void gil_assert();
 bool is_list_like(handle obj);
 bool is_dict_like(handle obj);
 
-} // namespace pybind11
+} // namespace nanobind
 
 namespace duckdb {
-#ifdef __GNUG__
-#define PYBIND11_NAMESPACE pybind11 __attribute__((visibility("hidden")))
-#else
-#define PYBIND11_NAMESPACE pybind11
-#endif
-namespace py {
 
-// We include everything from pybind11
-using namespace pybind11;
+namespace nb {
+
+// We include everything from nanobind
+using namespace nanobind;
 
 // But we have the option to override certain functions
 template <typename T, detail::enable_if_t<std::is_base_of<object, T>::value, int> = 0>
@@ -70,7 +61,7 @@ inline bool isinstance(handle obj, handle type) {
 	}
 	const auto result = PyObject_IsInstance(obj.ptr(), type.ptr());
 	if (result == -1) {
-		throw error_already_set();
+		throw python_error();
 	}
 	return result != 0;
 }
@@ -85,7 +76,7 @@ bool try_cast(const handle &object, T &result) {
 	return true;
 }
 
-} // namespace py
+} // namespace nb
 
 template <class T, typename... ARGS>
 void DefineMethod(std::vector<const char *> aliases, T &mod, ARGS &&... args) {

@@ -5,9 +5,9 @@
 
 namespace duckdb {
 
-py::handle PythonImporter::Import(stack<reference<PythonImportCacheItem>> &hierarchy, bool load) {
-	auto &import_cache = *DuckDBPyConnection::ImportCache();
-	py::handle source(nullptr);
+nb::handle PythonImporter::import_(stack<reference<PythonImportCacheItem>> &hierarchy, bool load) {
+	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	nb::handle source(nullptr);
 	while (!hierarchy.empty()) {
 		// From top to bottom, import them
 		auto &item = hierarchy.top();

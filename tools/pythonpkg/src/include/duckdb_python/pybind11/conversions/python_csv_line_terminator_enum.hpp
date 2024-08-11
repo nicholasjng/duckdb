@@ -47,9 +47,9 @@ public:
 
 using duckdb::PythonCSVLineTerminator;
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-namespace PYBIND11_NAMESPACE {
+namespace NB_NAMESPACE {
 namespace detail {
 
 template <>
@@ -61,8 +61,8 @@ public:
 	bool load(handle src, bool convert) {
 		if (base::load(src, convert)) {
 			return true;
-		} else if (py::isinstance<py::str>(src)) {
-			tmp = duckdb::PythonCSVLineTerminator::FromString(py::str(src));
+		} else if (nb::isinstance<nb::str>(src)) {
+			tmp = duckdb::PythonCSVLineTerminator::FromString(nb::str(src));
 			value = &tmp;
 			return true;
 		}
@@ -75,4 +75,4 @@ public:
 };
 
 } // namespace detail
-} // namespace PYBIND11_NAMESPACE
+} // namespace NB_NAMESPACE

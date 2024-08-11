@@ -6,7 +6,7 @@
 
 namespace duckdb {
 
-PythonFileHandle::PythonFileHandle(FileSystem &file_system, const string &path, const py::object &handle)
+PythonFileHandle::PythonFileHandle(FileSystem &file_system, const string &path, const nb::object &handle)
     : FileHandle(file_system, path), handle(handle) {
 }
 PythonFileHandle::~PythonFileHandle() {
@@ -18,7 +18,7 @@ PythonFileHandle::~PythonFileHandle() {
 	}
 }
 
-const py::object &PythonFileHandle::GetHandle(const FileHandle &handle) {
+const nb::object &PythonFileHandle::GetHandle(const FileHandle &handle) {
 	return handle.Cast<PythonFileHandle>().handle;
 }
 
@@ -83,7 +83,7 @@ unique_ptr<FileHandle> PythonFilesystem::OpenFile(const string &path, FileOpenFl
 
 	string flags_s = DecodeFlags(flags);
 
-	const auto &handle = filesystem.attr("open")(path, py::str(flags_s));
+	const auto &handle = filesystem.attr("open")(path, nb::str(flags_s));
 	return make_uniq<PythonFileHandle>(*this, path, handle);
 }
 
@@ -92,9 +92,9 @@ int64_t PythonFilesystem::Write(FileHandle &handle, void *buffer, int64_t nr_byt
 
 	const auto &write = PythonFileHandle::GetHandle(handle).attr("write");
 
-	auto data = py::bytes(std::string(const_char_ptr_cast(buffer), nr_bytes));
+	auto data = nb::bytes(std::string(const_char_ptr_cast(buffer), nr_bytes));
 
-	return py::int_(write(data));
+	return nb::int_(write(data));
 }
 void PythonFilesystem::Write(FileHandle &handle, void *buffer, int64_t nr_bytes, idx_t location) {
 	Seek(handle, location);
@@ -107,7 +107,7 @@ int64_t PythonFilesystem::Read(FileHandle &handle, void *buffer, int64_t nr_byte
 
 	const auto &read = PythonFileHandle::GetHandle(handle).attr("read");
 
-	string data = py::bytes(read(nr_bytes));
+	string data = nb::bytes(read(nr_bytes));
 
 	memcpy(buffer, data.c_str(), data.size());
 
@@ -125,7 +125,7 @@ bool PythonFilesystem::FileExists(const string &filename, optional_ptr<FileOpene
 bool PythonFilesystem::Exists(const string &filename, const char *func_name) const {
 	PythonGILWrapper gil;
 
-	return py::bool_(filesystem.attr(func_name)(filename));
+	return nb::bool_(filesystem.attr(func_name)(filename));
 }
 vector<string> PythonFilesystem::Glob(const string &path, FileOpener *opener) {
 	PythonGILWrapper gil;
@@ -133,12 +133,12 @@ vector<string> PythonFilesystem::Glob(const string &path, FileOpener *opener) {
 	if (path.empty()) {
 		return {path};
 	}
-	auto returner = py::list(filesystem.attr("glob")(path));
+	auto returner = nb::list(filesystem.attr("glob")(path));
 
 	vector<string> results;
 	auto unstrip_protocol = filesystem.attr("unstrip_protocol");
 	for (auto item : returner) {
-		results.push_back(py::str(unstrip_protocol(py::str(item))));
+		results.push_back(nb::str(unstrip_protocol(nb::str(item))));
 	}
 	return results;
 }
@@ -149,7 +149,7 @@ int64_t PythonFilesystem::GetFileSize(FileHandle &handle) {
 	// TODO: this value should be cached on the PythonFileHandle
 	PythonGILWrapper gil;
 
-	return py::int_(filesystem.attr("size")(handle.path));
+	return nb::int_(filesystem.attr("size")(handle.path));
 }
 void PythonFilesystem::Seek(duckdb::FileHandle &handle, uint64_t location) {
 	PythonGILWrapper gil;
@@ -173,13 +173,13 @@ void PythonFilesystem::MoveFile(const string &source, const string &dest, option
 	PythonGILWrapper gil;
 
 	auto move = filesystem.attr("mv");
-	move(py::str(source), py::str(dest));
+	move(nb::str(source), nb::str(dest));
 }
 void PythonFilesystem::RemoveFile(const string &filename, optional_ptr<FileOpener> opener) {
 	PythonGILWrapper gil;
 
 	auto remove = filesystem.attr("rm");
-	remove(py::str(filename));
+	remove(nb::str(filename));
 }
 time_t PythonFilesystem::GetLastModifiedTime(FileHandle &handle) {
 	// TODO: this value should be cached on the PythonFileHandle
@@ -187,7 +187,7 @@ time_t PythonFilesystem::GetLastModifiedTime(FileHandle &handle) {
 
 	auto last_mod = filesystem.attr("modified")(handle.path);
 
-	return py::int_(last_mod.attr("timestamp")());
+	return nb::int_(last_mod.attr("timestamp")());
 }
 void PythonFilesystem::FileSync(FileHandle &handle) {
 	PythonGILWrapper gil;
@@ -200,23 +200,23 @@ bool PythonFilesystem::DirectoryExists(const string &directory, optional_ptr<Fil
 void PythonFilesystem::RemoveDirectory(const string &directory, optional_ptr<FileOpener> opener) {
 	PythonGILWrapper gil;
 
-	filesystem.attr("rm")(directory, py::arg("recursive") = true);
+	filesystem.attr("rm")(directory, nb::arg("recursive") = true);
 }
 void PythonFilesystem::CreateDirectory(const string &directory, optional_ptr<FileOpener> opener) {
 	PythonGILWrapper gil;
 
-	filesystem.attr("mkdir")(py::str(directory));
+	filesystem.attr("mkdir")(nb::str(directory));
 }
 bool PythonFilesystem::ListFiles(const string &directory, const std::function<void(const string &, bool)> &callback,
                                  FileOpener *opener) {
-	static py::str DIRECTORY("directory");
+	static nb::str DIRECTORY("directory");
 
 	PythonGILWrapper gil;
 	bool nonempty = false;
 
-	for (auto item : filesystem.attr("ls")(py::str(directory))) {
+	for (auto item : filesystem.attr("ls")(nb::str(directory))) {
 		bool is_dir = DIRECTORY.equal(item["type"]);
-		callback(py::str(item["name"]), is_dir);
+		callback(nb::str(item["name"]), is_dir);
 		nonempty = true;
 	}
 
@@ -225,7 +225,7 @@ bool PythonFilesystem::ListFiles(const string &directory, const std::function<vo
 void PythonFilesystem::Truncate(FileHandle &handle, int64_t new_size) {
 	PythonGILWrapper gil;
 
-	filesystem.attr("touch")(handle.path, py::arg("truncate") = true);
+	filesystem.attr("touch")(handle.path, nb::arg("truncate") = true);
 }
 bool PythonFilesystem::IsPipe(const string &filename, optional_ptr<FileOpener> opener) {
 	return false;
@@ -233,6 +233,6 @@ bool PythonFilesystem::IsPipe(const string &filename, optional_ptr<FileOpener> o
 idx_t PythonFilesystem::SeekPosition(FileHandle &handle) {
 	PythonGILWrapper gil;
 
-	return py::int_(PythonFileHandle::GetHandle(handle).attr("tell")());
+	return nb::int_(PythonFileHandle::GetHandle(handle).attr("tell")());
 }
 } // namespace duckdb

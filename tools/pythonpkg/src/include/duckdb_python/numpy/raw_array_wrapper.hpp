@@ -17,7 +17,7 @@ struct RawArrayWrapper {
 
 	explicit RawArrayWrapper(const LogicalType &type);
 
-	py::array array;
+	nb::array array;
 	data_ptr_t data;
 	LogicalType type;
 	idx_t type_width;

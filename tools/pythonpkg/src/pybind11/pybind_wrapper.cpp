@@ -2,7 +2,7 @@
 #include "duckdb/common/exception.hpp"
 #include "duckdb_python/pyconnection/pyconnection.hpp"
 
-namespace pybind11 {
+namespace nanobind {
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 bool gil_check() {
@@ -24,16 +24,16 @@ bool is_list_like(handle obj) {
 	if (is_dict_like(obj)) {
 		return false;
 	}
-	auto &import_cache = *duckdb::DuckDBPyConnection::ImportCache();
+	auto &import_cache = *duckdb::DuckDBPyConnection::import_Cache();
 	auto iterable = import_cache.collections.abc.Iterable();
 	return isinstance(obj, iterable);
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 bool is_dict_like(handle obj) {
-	auto &import_cache = *duckdb::DuckDBPyConnection::ImportCache();
+	auto &import_cache = *duckdb::DuckDBPyConnection::import_Cache();
 	auto mapping = import_cache.collections.abc.Mapping();
 	return isinstance(obj, mapping);
 }
 
-} // namespace pybind11
+} // namespace nanobind

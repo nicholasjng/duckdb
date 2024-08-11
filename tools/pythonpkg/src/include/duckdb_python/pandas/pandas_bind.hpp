@@ -11,9 +11,9 @@ namespace duckdb {
 class ClientContext;
 
 struct RegisteredArray {
-	explicit RegisteredArray(py::array numpy_array) : numpy_array(std::move(numpy_array)) {
+	explicit RegisteredArray(nb::array numpy_array) : numpy_array(std::move(numpy_array)) {
 	}
-	py::array numpy_array;
+	nb::array numpy_array;
 };
 
 struct PandasColumnBindData {
@@ -27,7 +27,7 @@ struct PandasColumnBindData {
 };
 
 struct Pandas {
-	static void Bind(const ClientContext &config, py::handle df, vector<PandasColumnBindData> &out,
+	static void Bind(const ClientContext &config, nb::handle df, vector<PandasColumnBindData> &out,
 	                 vector<LogicalType> &return_types, vector<string> &names);
 };
 

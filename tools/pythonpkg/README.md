@@ -79,7 +79,7 @@ m.def("query_df", &DuckDBPyRelation::QueryDF,
       "query_df(self, df: pandas.DataFrame, virtual_table_name: str, sql_query: str) -> DuckDBPyRelation \n"
       "Run the given SQL query in sql_query on the view named virtual_table_name that contains the content of "
       "Data.Frame df",
-      py::arg("df"), py::arg("virtual_table_name"), py::arg("sql_query"));
+      nb::arg("df"), nb::arg("virtual_table_name"), nb::arg("sql_query"));
 pybind_opts.enable_function_signatures();
 // now the generated stub is
 // def query_df(self, df: pandas.DataFrame, virtual_table_name: str, sql_query: str) -> DuckDBPyRelation: ...
@@ -155,14 +155,14 @@ For example:
 export PATH="$PATH:/opt/homebrew/Cellar/llvm/15.0.2/bin"
 ```
 
-# What are py::objects and a py::handles??
+# What are nb::objects and a nb::handles??
 
 These are classes provided by pybind11, the library we use to manage our interaction with the python environment.
-py::handle is a direct wrapper around a raw PyObject* and does not manage any references.
-py::object is similar to py::handle but it can handle refcounts.
+nb::handle is a direct wrapper around a raw PyObject* and does not manage any references.
+nb::object is similar to nb::handle but it can handle refcounts.
 
-I say *can* because it doesn't have to, using `py::reinterpret_borrow<py::object>(...)` we can create a non-owning py::object, this is essentially just a py::handle but py::handle can't be used if the prototype requires a py::object.
+I say *can* because it doesn't have to, using `nb::borrow<nb::object>(...)` we can create a non-owning nb::object, this is essentially just a nb::handle but nb::handle can't be used if the prototype requires a nb::object.
 
-`py::reinterpret_steal<py::object>(...)` creates an owning py::object, this will increase the refcount of the python object and will decrease the refcount when the py::object goes out of scope.
+`nb::steal<nb::object>(...)` creates an owning nb::object, this will increase the refcount of the python object and will decrease the refcount when the nb::object goes out of scope.
 
-When directly interacting with python functions that return a `PyObject*`, such as `PyDateTime_DATE_GET_TZINFO`, you should generally wrap the call in `py::reinterpret_steal` to take ownership of the returned object.
+When directly interacting with python functions that return a `PyObject*`, such as `PyDateTime_DATE_GET_TZINFO`, you should generally wrap the call in `nb::steal` to take ownership of the returned object.

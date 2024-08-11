@@ -6,37 +6,37 @@
 
 namespace duckdb {
 
-void InitializeStaticMethods(py::module_ &m) {
+void InitializeStaticMethods(nb::module_ &m) {
 	const char *docs;
 
 	// Constant Expression
 	docs = "Create a constant expression from the provided value";
-	m.def("ConstantExpression", &DuckDBPyExpression::ConstantExpression, py::arg("value"), docs);
+	m.def("ConstantExpression", &DuckDBPyExpression::ConstantExpression, nb::arg("value"), docs);
 
 	// ColumnRef Expression
 	docs = "Create a column reference from the provided column name";
-	m.def("ColumnExpression", &DuckDBPyExpression::ColumnExpression, py::arg("name"), docs);
+	m.def("ColumnExpression", &DuckDBPyExpression::ColumnExpression, nb::arg("name"), docs);
 
 	// Case Expression
 	docs = "";
-	m.def("CaseExpression", &DuckDBPyExpression::CaseExpression, py::arg("condition"), py::arg("value"), docs);
+	m.def("CaseExpression", &DuckDBPyExpression::CaseExpression, nb::arg("condition"), nb::arg("value"), docs);
 
 	// Star Expression
 	docs = "";
-	m.def("StarExpression", &DuckDBPyExpression::StarExpression, py::kw_only(), py::arg("exclude") = py::list(), docs);
+	m.def("StarExpression", &DuckDBPyExpression::StarExpression, nb::kw_only(), nb::arg("exclude") = nb::list(), docs);
 	m.def(
 	    "StarExpression", []() { return DuckDBPyExpression::StarExpression(); }, docs);
 
 	// Function Expression
 	docs = "";
-	m.def("FunctionExpression", &DuckDBPyExpression::FunctionExpression, py::arg("function_name"), docs);
+	m.def("FunctionExpression", &DuckDBPyExpression::FunctionExpression, nb::arg("function_name"), docs);
 
 	// Coalesce Operator
 	docs = "";
 	m.def("CoalesceOperator", &DuckDBPyExpression::Coalesce, docs);
 }
 
-static void InitializeDunderMethods(py::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>> &m) {
+static void InitializeDunderMethods(nb::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>> &m) {
 	const char *docs;
 
 	docs = R"(
@@ -49,8 +49,8 @@ static void InitializeDunderMethods(py::class_<DuckDBPyExpression, shared_ptr<Du
 			FunctionExpression: self '+' expr
 	)";
 
-	m.def("__add__", &DuckDBPyExpression::Add, py::arg("expr"), docs);
-	m.def("__radd__", &DuckDBPyExpression::Add, py::arg("expr"), docs);
+	m.def("__add__", &DuckDBPyExpression::Add, nb::arg("expr"), docs);
+	m.def("__radd__", &DuckDBPyExpression::Add, nb::arg("expr"), docs);
 
 	docs = R"(
 		Negate the expression.
@@ -256,19 +256,19 @@ static void InitializeDunderMethods(py::class_<DuckDBPyExpression, shared_ptr<Du
 	m.def("__ror__", &DuckDBPyExpression::Or, docs);
 }
 
-static void InitializeImplicitConversion(py::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>> &m) {
-	m.def(py::init<>([](const string &name) { return DuckDBPyExpression::ColumnExpression(name); }));
-	m.def(py::init<>([](const py::object &obj) {
+static void InitializeImplicitConversion(nb::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>> &m) {
+	m.def(nb::init<>([](const string &name) { return DuckDBPyExpression::ColumnExpression(name); }));
+	m.def(nb::init<>([](const nb::object &obj) {
 		auto val = TransformPythonValue(obj);
 		return DuckDBPyExpression::InternalConstantExpression(std::move(val));
 	}));
-	py::implicitly_convertible<py::str, DuckDBPyExpression>();
-	py::implicitly_convertible<py::object, DuckDBPyExpression>();
+	nb::implicitly_convertible<nb::str, DuckDBPyExpression>();
+	nb::implicitly_convertible<nb::object, DuckDBPyExpression>();
 }
 
-void DuckDBPyExpression::Initialize(py::module_ &m) {
+void DuckDBPyExpression::Initialize(nb::module_ &m) {
 	auto expression =
-	    py::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>>(m, "Expression", py::module_local());
+	    nb::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>>(m, "Expression", nb::module_local());
 
 	InitializeStaticMethods(m);
 	InitializeDunderMethods(expression);
@@ -362,7 +362,7 @@ void DuckDBPyExpression::Initialize(py::module_ &m) {
 		Returns:
 			CaseExpression: self with an additional WHEN clause.
 	)";
-	expression.def("when", &DuckDBPyExpression::When, py::arg("condition"), py::arg("value"), docs);
+	expression.def("when", &DuckDBPyExpression::When, nb::arg("condition"), nb::arg("value"), docs);
 
 	docs = R"(
 		Add an ELSE <value> clause to the CaseExpression.
@@ -373,7 +373,7 @@ void DuckDBPyExpression::Initialize(py::module_ &m) {
 		Returns:
 			CaseExpression: self with an ELSE clause.
 	)";
-	expression.def("otherwise", &DuckDBPyExpression::Else, py::arg("value"), docs);
+	expression.def("otherwise", &DuckDBPyExpression::Else, nb::arg("value"), docs);
 
 	docs = R"(
 		Create a CastExpression to type from self
@@ -384,7 +384,7 @@ void DuckDBPyExpression::Initialize(py::module_ &m) {
 		Returns:
 			CastExpression: self::type
 	)";
-	expression.def("cast", &DuckDBPyExpression::Cast, py::arg("type"), docs);
+	expression.def("cast", &DuckDBPyExpression::Cast, nb::arg("type"), docs);
 }
 
 } // namespace duckdb

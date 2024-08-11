@@ -1,9 +1,9 @@
 #include "duckdb_python/pybind11/pybind_wrapper.hpp"
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
 namespace duckdb {
 
-void RegisterExceptions(const py::module &m);
+void RegisterExceptions(const nb::module_ &m);
 
 } // namespace duckdb

@@ -5,9 +5,9 @@
 
 using duckdb::Optional;
 
-namespace py = pybind11;
+namespace nb = nanobind;
 
-namespace PYBIND11_NAMESPACE {
+namespace NB_NAMESPACE {
 namespace detail {
 
 template <class T>
@@ -32,4 +32,4 @@ public:
 };
 
 } // namespace detail
-} // namespace PYBIND11_NAMESPACE
+} // namespace NB_NAMESPACE
