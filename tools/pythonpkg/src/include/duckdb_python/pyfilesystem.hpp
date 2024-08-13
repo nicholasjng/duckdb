@@ -102,12 +102,3 @@ public:
 };
 
 } // namespace duckdb
-
-namespace nanobind {
-namespace detail {
-template <>
-struct handle_type_name<duckdb::AbstractFileSystem> {
-	static constexpr auto name = const_name("fsspec.AbstractFileSystem");
-};
-} // namespace detail
-} // namespace nanobind

@@ -275,7 +275,7 @@ shared_ptr<DuckDBPyExpression> DuckDBPyExpression::StarExpression(const nb::list
 
 shared_ptr<DuckDBPyExpression> DuckDBPyExpression::ColumnExpression(const string &column_name) {
 	if (column_name == "*") {
-		return StarExpression();
+		return StarExpression(nb::list());
 	}
 
 	auto qualified_name = QualifiedName::Parse(column_name);

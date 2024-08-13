@@ -241,7 +241,7 @@ void PyThrowException(ErrorData &error, PyObject *http_exception) {
 	switch (error.Type()) {
 	case ExceptionType::HTTP: {
 		// construct exception object
-		auto e = nb::handle(http_exception)(nb::str(error.Message()));
+		auto e = nb::handle(http_exception)(nb::str(error.Message().c_str()));
 
 		auto headers = nb::dict();
 		for (auto &entry : error.ExtraInfo()) {
@@ -252,7 +252,7 @@ void PyThrowException(ErrorData &error, PyObject *http_exception) {
 			} else if (entry.first == "reason") {
 				e.attr("reason") = entry.second;
 			} else if (StringUtil::StartsWith(entry.first, "header_")) {
-				headers[nb::str(entry.first.substr(7))] = entry.second;
+				headers[nb::str(entry.first.substr(7).c_str())] = entry.second;
 			}
 		}
 		e.attr("headers") = std::move(headers);
@@ -345,11 +345,16 @@ void RegisterExceptions(const nb::module_ &m) {
 	nb::exception<PySerializationException>(m, "SerializationException", operational_error);
 
 	static nb::exception<PyHTTPException> HTTP_EXCEPTION(m, "HTTPException", io_exception);
-	const auto string_type = nb::type<nb::str>;
+	const auto string_type = nb::type<nb::str>();
 	const auto Dict = nb::module_::import_("typing").attr("Dict");
-	HTTP_EXCEPTION.attr("__annotations__") =
-	    nb::dict(nb::arg("status_code") = nb::type::of(nb::int_()), nb::arg("body") = string_type,
-	             nb::arg("reason") = string_type, nb::arg("headers") = Dict[nb::make_tuple(string_type, string_type)]);
+
+	nb::dict annotations = nb::dict();
+	annotations["status_code"] = nb::type<nb::int_>();
+	annotations["body"] = string_type;
+	annotations["reason"] = string_type;
+	annotations["headers"] = Dict[nb::make_tuple(string_type, string_type)];
+
+	HTTP_EXCEPTION.attr("__annotations__") = annotations;
 	HTTP_EXCEPTION.doc() = "Thrown when an error occurs in the httpfs extension, or whilst downloading an extension.";
 
 	// IntegrityError
@@ -374,7 +379,7 @@ void RegisterExceptions(const nb::module_ &m) {
 	auto not_supported_error = nb::exception<NotSupportedError>(m, "NotSupportedError", db_error).ptr();
 	nb::exception<PyNotImplementedException>(m, "NotImplementedException", not_supported_error);
 
-	nb::exception_translator([](std::exception_ptr p) { // NOLINT(performance-unnecessary-value-param)
+	nb::register_exception_translator([](const std::exception_ptr &p, void *) { // NOLINT(performance-unnecessary-value-param)
 		try {
 			if (p) {
 				std::rethrow_exception(p);

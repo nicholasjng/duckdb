@@ -20,7 +20,7 @@ public:
 	~FileSystemObject() override {
 		nb::gil_scoped_acquire acquire;
 		// Assert that the 'obj' is a filesystem
-		D_ASSERT(nb::isinstance(obj, DuckDBPyConnection::import_Cache()->duckdb.filesystem.ModifiedMemoryFileSystem()));
+		D_ASSERT(nb::isinstance(obj, DuckDBPyConnection::ImportCache()->duckdb.filesystem.ModifiedMemoryFileSystem()));
 		for (auto &file : filenames) {
 			obj.attr("delete")(file);
 		}

@@ -79,7 +79,7 @@ PathLike PathLikeProcessor::Finalize() {
 }
 
 PathLike PathLike::Create(const nb::object &object, DuckDBPyConnection &connection) {
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 
 	PathLikeProcessor processor(connection, import_cache);
 	if (nb::isinstance<nb::list>(object)) {

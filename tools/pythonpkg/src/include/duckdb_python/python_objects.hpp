@@ -41,7 +41,7 @@ public:
 
 public:
 	string ToString() const {
-		return string(nb::str(dict));
+		return string(nb::str(dict).c_str());
 	}
 
 private:
@@ -206,19 +206,19 @@ struct PythonObject {
 template <class T>
 class Optional : public nb::object {
 public:
-	Optional(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	Optional(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
 public:
 	static bool check_(const nb::handle &object) {
-		return object.is_none() || nb::isinstance<T>(object);
+		return object.is_none() || nanobind::isinstance<T>(object);
 	}
 };
 
 class FileLikeObject : public nb::object {
 public:
-	FileLikeObject(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	FileLikeObject(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
@@ -229,12 +229,3 @@ public:
 };
 
 } // namespace duckdb
-
-namespace nanobind {
-namespace detail {
-template <typename T>
-struct handle_type_name<duckdb::Optional<T>> {
-	static constexpr auto name = const_name("typing.Optional[") + concat(make_caster<T>::name) + const_name("]");
-};
-} // namespace detail
-} // namespace nanobind

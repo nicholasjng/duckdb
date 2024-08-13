@@ -24,14 +24,14 @@ bool is_list_like(handle obj) {
 	if (is_dict_like(obj)) {
 		return false;
 	}
-	auto &import_cache = *duckdb::DuckDBPyConnection::import_Cache();
+	auto &import_cache = *duckdb::DuckDBPyConnection::ImportCache();
 	auto iterable = import_cache.collections.abc.Iterable();
 	return isinstance(obj, iterable);
 }
 
 // NOLINTNEXTLINE(readability-identifier-naming)
 bool is_dict_like(handle obj) {
-	auto &import_cache = *duckdb::DuckDBPyConnection::import_Cache();
+	auto &import_cache = *duckdb::DuckDBPyConnection::ImportCache();
 	auto mapping = import_cache.collections.abc.Mapping();
 	return isinstance(obj, mapping);
 }

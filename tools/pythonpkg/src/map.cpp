@@ -45,10 +45,10 @@ static nb::object FunctionCall(NumpyResultConversion &conversion, const vector<s
 		throw InvalidInputException("No return value from Python function");
 	}
 
-	if (!nb::isinstance<PandasDataFrame>(df)) {
+	if (!nanobind::isinstance<PandasDataFrame>(df)) {
 		throw InvalidInputException(
 		    "Expected the UDF to return an object of type 'pandas.DataFrame', found '%s' instead",
-		    std::string(nb::str(df.attr("__class__"))));
+		    std::string(nb::str(df.attr("__class__")).c_str()));
 	}
 	if (PandasDataFrame::IsPyArrowBacked(df)) {
 		throw InvalidInputException(
@@ -99,7 +99,7 @@ unique_ptr<FunctionData> BindExplicitSchema(unique_ptr<MapFunctionData> function
 	D_ASSERT(schema_p != Py_None);
 
 	auto schema_object = nb::borrow<nb::dict>(schema_p);
-	if (!nb::isinstance<nb::dict>(schema_object)) {
+	if (!nanobind::isinstance<nb::dict>(schema_object)) {
 		throw InvalidInputException("'schema' should be given as a Dict[str, DuckDBType]");
 	}
 	auto schema = nb::dict(schema_object);
@@ -108,10 +108,10 @@ unique_ptr<FunctionData> BindExplicitSchema(unique_ptr<MapFunctionData> function
 
 	types.reserve(column_count);
 	names.reserve(column_count);
-	for (auto &item : schema) {
+	for (auto item : schema) {
 		auto name = item.first;
 		auto type_p = item.second;
-		names.push_back(std::string(nb::str(name)));
+		names.push_back(std::string(nb::str(name).c_str()));
 		// TODO: replace with nb::try_cast so we can catch the error and throw a better exception
 		auto type = nb::cast<shared_ptr<DuckDBPyType>>(type_p);
 		types.push_back(type->Type());

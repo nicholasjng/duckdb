@@ -11,9 +11,9 @@ namespace duckdb {
 class ClientContext;
 
 struct RegisteredArray {
-	explicit RegisteredArray(nb::array numpy_array) : numpy_array(std::move(numpy_array)) {
+	explicit RegisteredArray(nb::ndarray<nb::numpy> numpy_array) : numpy_array(std::move(numpy_array)) {
 	}
-	nb::array numpy_array;
+	nb::ndarray<nb::numpy> numpy_array;
 };
 
 struct PandasColumnBindData {

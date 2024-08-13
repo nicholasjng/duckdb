@@ -12,32 +12,26 @@ namespace NB_NAMESPACE {
 namespace detail {
 
 template <>
-class type_caster<shared_ptr<DuckDBPyConnection>>
-    : public copyable_holder_caster<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>> {
+struct type_caster<shared_ptr<DuckDBPyConnection>> : public type_caster_base<shared_ptr<DuckDBPyConnection>> {
+    using base = type_caster_base<shared_ptr<DuckDBPyConnection>>;
 	using type = DuckDBPyConnection;
-	using holder_caster = copyable_holder_caster<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>>;
-	// This is used to generate documentation on duckdb-web
-	PYBIND11_TYPE_CASTER(shared_ptr<type>, const_name("duckdb.DuckDBPyConnection"));
+	NB_TYPE_CASTER(shared_ptr<type>, const_name("duckdb.DuckDBPyConnection"));
 
-	bool load(handle src, bool convert) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
 		if (nb::none().is(src)) {
 			value = DuckDBPyConnection::DefaultConnection();
 			return true;
 		}
-		if (!holder_caster::load(src, convert)) {
-			return false;
+		if (!base::from_python(src, flags, cleanup)) {
+		    return false;
 		}
-		value = std::move(holder);
 		return true;
 	}
 
-	static handle cast(shared_ptr<type> base, return_value_policy rvp, handle h) {
-		return holder_caster::cast(base, rvp, h);
+	static handle from_cpp(shared_ptr<type> base, rv_policy rvp, cleanup_list *cleanup) {
+		return base::from_cpp(base, rvp, cleanup);
 	}
 };
-
-template <>
-struct is_holder_type<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>> : std::true_type {};
 
 } // namespace detail
 } // namespace NB_NAMESPACE

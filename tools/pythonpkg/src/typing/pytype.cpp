@@ -13,7 +13,7 @@ bool PyGenericAlias::check_(const nb::handle &object) {
 	if (!ModuleIsLoaded<TypesCacheItem>()) {
 		return false;
 	}
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache.types.GenericAlias());
 }
 
@@ -26,7 +26,7 @@ bool PyUnionType::check_(const nb::handle &object) {
 		return false;
 	}
 
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	if (types_loaded && nb::isinstance(object, import_cache.types.UnionType())) {
 		return true;
 	}
@@ -305,7 +305,7 @@ static LogicalType FromObject(const nb::object &object) {
 }
 
 void DuckDBPyType::Initialize(nb::handle &m) {
-	auto type_module = nb::class_<DuckDBPyType, shared_ptr<DuckDBPyType>>(m, "DuckDBPyType", nb::module_local());
+	auto type_module = nb::class_<DuckDBPyType, shared_ptr<DuckDBPyType>>(m, "DuckDBPyType");
 
 	type_module.def("__repr__", &DuckDBPyType::ToString, "Stringified representation of the type object");
 	type_module.def("__eq__", &DuckDBPyType::Equals, "Compare two types for equality", nb::arg("other"));

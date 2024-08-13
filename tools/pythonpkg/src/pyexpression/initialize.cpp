@@ -268,7 +268,7 @@ static void InitializeImplicitConversion(nb::class_<DuckDBPyExpression, shared_p
 
 void DuckDBPyExpression::Initialize(nb::module_ &m) {
 	auto expression =
-	    nb::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>>(m, "Expression", nb::module_local());
+	    nb::class_<DuckDBPyExpression, shared_ptr<DuckDBPyExpression>>(m, "Expression");
 
 	InitializeStaticMethods(m);
 	InitializeDunderMethods(expression);

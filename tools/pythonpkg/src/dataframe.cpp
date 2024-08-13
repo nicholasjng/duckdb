@@ -6,7 +6,7 @@ bool PolarsDataFrame::IsDataFrame(const nb::handle &object) {
 	if (!ModuleIsLoaded<PolarsCacheItem>()) {
 		return false;
 	}
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache.polars.DataFrame());
 }
 
@@ -14,7 +14,7 @@ bool PolarsDataFrame::IsLazyFrame(const nb::handle &object) {
 	if (!ModuleIsLoaded<PolarsCacheItem>()) {
 		return false;
 	}
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache.polars.LazyFrame());
 }
 
@@ -22,7 +22,7 @@ bool PandasDataFrame::check_(const nb::handle &object) { // NOLINT
 	if (!ModuleIsLoaded<PandasCacheItem>()) {
 		return false;
 	}
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache.pandas.DataFrame());
 }
 
@@ -31,14 +31,14 @@ bool PandasDataFrame::IsPyArrowBacked(const nb::handle &df) {
 		return false;
 	}
 
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	nb::list dtypes = df.attr("dtypes");
-	if (dtypes.empty()) {
+	if (nb::len(dtypes) == 0) {
 		return false;
 	}
 
 	auto arrow_dtype = import_cache.pandas.ArrowDtype();
-	for (auto &dtype : dtypes) {
+	for (nb::handle dtype : dtypes) {
 		if (nb::isinstance(dtype, arrow_dtype)) {
 			return true;
 		}
@@ -59,7 +59,7 @@ nb::object PandasDataFrame::ToArrowTable(const nb::object &df) {
 }
 
 bool PolarsDataFrame::check_(const nb::handle &object) { // NOLINT
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache.polars.DataFrame());
 }
 

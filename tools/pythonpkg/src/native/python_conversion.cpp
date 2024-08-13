@@ -24,7 +24,7 @@ vector<string> TransformStructKeys(nb::handle keys, idx_t size, const LogicalTyp
 	vector<string> res;
 	res.reserve(size);
 	for (idx_t i = 0; i < size; i++) {
-		res.emplace_back(nb::str(keys.attr("__getitem__")(i)));
+		res.emplace_back(nb::cast<string>(nb::str(keys.attr("__getitem__")(i))));
 	}
 	return res;
 }
@@ -340,16 +340,16 @@ bool TryTransformPythonNumeric(Value &res, nb::handle ele, const LogicalType &ta
 		PyErr_Clear();
 		if (target_type.id() == LogicalTypeId::BIGINT) {
 			throw InvalidInputException(StringUtil::Format("Failed to cast value: Python value '%s' to INT64",
-			                                               std::string(nb::str(ele))));
+			                                               std::string(nb::str(ele).c_str())));
 		}
 		auto cast_as = target_type.id() == LogicalTypeId::UNKNOWN ? LogicalType::HUGEINT : target_type;
-		auto numeric_string = std::string(nb::str(ele));
+		auto numeric_string = std::string(nb::str(ele).c_str());
 		res = Value(numeric_string).DefaultCastAs(cast_as);
 		return true;
 	} else if (overflow == 1) {
 		if (target_type.InternalType() == PhysicalType::INT64) {
 			throw InvalidInputException(StringUtil::Format("Failed to cast value: Python value '%s' to INT64",
-			                                               std::string(nb::str(ele))));
+			                                               std::string(nb::str(ele).c_str())));
 		}
 		uint64_t unsigned_value = PyLong_AsUnsignedLongLong(ptr);
 		if (PyErr_Occurred()) {
@@ -444,7 +444,7 @@ bool TryTransformPythonNumeric(Value &res, nb::handle ele, const LogicalType &ta
 }
 
 PythonObjectType GetPythonObjectType(nb::handle &ele) {
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 
 	if (ele.is_none()) {
 		return PythonObjectType::None;
@@ -452,11 +452,11 @@ PythonObjectType GetPythonObjectType(nb::handle &ele) {
 		return PythonObjectType::None;
 	} else if (ele.is(import_cache.pandas.NA())) {
 		return PythonObjectType::None;
-	} else if (nb::isinstance<nb::bool_>(ele)) {
+	} else if (nanobind::isinstance<nb::bool_>(ele)) {
 		return PythonObjectType::Bool;
-	} else if (nb::isinstance<nb::int_>(ele)) {
+	} else if (nanobind::isinstance<nb::int_>(ele)) {
 		return PythonObjectType::Integer;
-	} else if (nb::isinstance<nb::float_>(ele)) {
+	} else if (nanobind::isinstance<nb::float_>(ele)) {
 		return PythonObjectType::Float;
 	} else if (nb::isinstance(ele, import_cache.decimal.Decimal())) {
 		return PythonObjectType::Decimal;
@@ -470,19 +470,19 @@ PythonObjectType GetPythonObjectType(nb::handle &ele) {
 		return PythonObjectType::Date;
 	} else if (nb::isinstance(ele, import_cache.datetime.timedelta())) {
 		return PythonObjectType::Timedelta;
-	} else if (nb::isinstance<nb::str>(ele)) {
+	} else if (nanobind::isinstance<nb::str>(ele)) {
 		return PythonObjectType::String;
-	} else if (nb::isinstance<nb::bytearray>(ele)) {
-		return PythonObjectType::ByteArray;
-	} else if (nb::isinstance<nb::memoryview>(ele)) {
-		return PythonObjectType::MemoryView;
-	} else if (nb::isinstance<nb::bytes>(ele)) {
+	// } else if (nanobind::isinstance<nb::bytearray>(ele)) {
+	// 	return PythonObjectType::ByteArray;
+	// } else if (nanobind::isinstance<nb::memoryview>(ele)) {
+	// 	return PythonObjectType::MemoryView;
+	} else if (nanobind::isinstance<nb::bytes>(ele)) {
 		return PythonObjectType::Bytes;
-	} else if (nb::isinstance<nb::list>(ele)) {
+	} else if (nanobind::isinstance<nb::list>(ele)) {
 		return PythonObjectType::List;
-	} else if (nb::isinstance<nb::tuple>(ele)) {
+	} else if (nanobind::isinstance<nb::tuple>(ele)) {
 		return PythonObjectType::Tuple;
-	} else if (nb::isinstance<nb::dict>(ele)) {
+	} else if (nanobind::isinstance<nb::dict>(ele)) {
 		return PythonObjectType::Dict;
 	} else if (ele.is(import_cache.numpy.ma.masked())) {
 		return PythonObjectType::None;
@@ -504,7 +504,7 @@ Value TransformPythonValue(nb::handle ele, const LogicalType &target_type, bool 
 	case PythonObjectType::None:
 		return Value();
 	case PythonObjectType::Bool:
-		return Value::BOOLEAN(ele.cast<bool>());
+		return Value::BOOLEAN(nb::cast<bool>(ele));
 	case PythonObjectType::Integer: {
 		Value integer;
 		if (!TryTransformPythonNumeric(integer, ele, target_type)) {
@@ -519,10 +519,10 @@ Value TransformPythonValue(nb::handle ele, const LogicalType &target_type, bool 
 		switch (target_type.id()) {
 		case LogicalTypeId::UNKNOWN:
 		case LogicalTypeId::DOUBLE: {
-			return Value::DOUBLE(ele.cast<double>());
+			return Value::DOUBLE(nb::cast<double>(ele));
 		}
 		case LogicalTypeId::FLOAT: {
-			return Value::FLOAT(ele.cast<float>());
+			return Value::FLOAT(nb::cast<float>(ele));
 		}
 		case LogicalTypeId::DECIMAL: {
 			throw ConversionException("Can't losslessly convert from object of float to type %s",
@@ -536,15 +536,15 @@ Value TransformPythonValue(nb::handle ele, const LogicalType &target_type, bool 
 		return decimal.ToDuckValue();
 	}
 	case PythonObjectType::Uuid: {
-		auto string_val = nb::str(ele).cast<string>();
+		auto string_val = nb::cast<string>(ele);
 		return Value::UUID(string_val);
 	}
 	case PythonObjectType::Datetime: {
-		auto &import_cache = *DuckDBPyConnection::import_Cache();
+		auto &import_cache = *DuckDBPyConnection::ImportCache();
 		bool is_nat = false;
 		if (import_cache.pandas.isnull(false)) {
 			auto isnull_result = import_cache.pandas.isnull()(ele);
-			is_nat = string(nb::str(isnull_result)) == "True";
+			is_nat = string(nb::str(isnull_result).c_str()) == "True";
 		}
 		if (is_nat) {
 			return Value();
@@ -565,7 +565,7 @@ Value TransformPythonValue(nb::handle ele, const LogicalType &target_type, bool 
 		return Value::INTERVAL(timedelta.ToInterval());
 	}
 	case PythonObjectType::String: {
-		auto stringified = ele.cast<string>();
+		auto stringified = nb::cast<string>(ele);
 		if (target_type.id() == LogicalTypeId::UNKNOWN) {
 			return Value(stringified);
 		}
@@ -578,12 +578,14 @@ Value TransformPythonValue(nb::handle ele, const LogicalType &target_type, bool 
 		return Value::BLOB(bytes, byte_length);
 	}
 	case PythonObjectType::MemoryView: {
-		nb::memoryview py_view = ele.cast<nb::memoryview>();
-		Py_buffer *py_buf = PyUtil::PyMemoryViewGetBuffer(py_view); // NOLINT
-		return Value::BLOB(const_data_ptr_t(py_buf->buf), idx_t(py_buf->len));
+	    // TODO: Nanobind has no memoryview class currently
+		// nb::memoryview py_view = ele.cast<nb::memoryview>();
+		// Py_buffer *py_buf = PyUtil::PyMemoryViewGetBuffer(py_view); // NOLINT
+		// return Value::BLOB(const_data_ptr_t(py_buf->buf), idx_t(py_buf->len));
+		throw NotImplementedException("nanobind does not support memoryviews!");
 	}
 	case PythonObjectType::Bytes: {
-		const string &ele_string = ele.cast<string>();
+		const string &ele_string = nb::cast<string>(ele);
 		switch (target_type.id()) {
 		case LogicalTypeId::UNKNOWN:
 		case LogicalTypeId::BLOB:
@@ -634,14 +636,14 @@ Value TransformPythonValue(nb::handle ele, const LogicalType &target_type, bool 
 		auto type = ele.attr("type");
 		shared_ptr<DuckDBPyType> internal_type;
 		if (!nb::try_cast<shared_ptr<DuckDBPyType>>(type, internal_type)) {
-			string actual_type = nb::str(type.get_type());
+			string actual_type = nb::cast<string>(nb::str(type.type()));
 			throw InvalidInputException("The 'type' of a Value should be of type DuckDBPyType, not '%s'", actual_type);
 		}
 		return TransformPythonValue(object, internal_type->Type());
 	}
 	case PythonObjectType::Other:
 		throw NotImplementedException("Unable to transform python value of type '%s' to DuckDB LogicalType",
-		                              nb::str(ele.get_type()).cast<string>());
+		                              nb::cast<string>(nb::str(ele.type())));
 	default:
 		throw InternalException("Object type recognized but not implemented!");
 	}

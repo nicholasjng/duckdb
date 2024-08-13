@@ -22,7 +22,7 @@ public:
 	~DuckDBPyResult();
 
 public:
-	Optional<nb::tuple> Fetchone();
+	std::optional<nb::tuple> Fetchone();
 
 	nb::list Fetchmany(idx_t size);
 

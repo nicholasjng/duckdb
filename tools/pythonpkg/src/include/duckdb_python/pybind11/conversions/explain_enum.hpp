@@ -38,27 +38,29 @@ namespace detail {
 
 template <>
 struct type_caster<ExplainType> : public type_caster_base<ExplainType> {
+    NB_TYPE_CASTER(ExplainType, const_name("ExplainType"))
+
 	using base = type_caster_base<ExplainType>;
 	ExplainType tmp;
 
 public:
-	bool load(handle src, bool convert) {
-		if (base::load(src, convert)) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
 		} else if (nb::isinstance<nb::str>(src)) {
-			tmp = ExplainTypeFromString(nb::str(src));
-			value = &tmp;
+			tmp = ExplainTypeFromString(nb::cast<std::string>(src));
+			value = tmp;
 			return true;
 		} else if (nb::isinstance<nb::int_>(src)) {
-			tmp = ExplainTypeFromInteger(src.cast<int64_t>());
-			value = &tmp;
+			tmp = ExplainTypeFromInteger(nb::cast<int64_t>(src));
+			value = tmp;
 			return true;
 		}
 		return false;
 	}
 
-	static handle cast(ExplainType src, return_value_policy policy, handle parent) {
-		return base::cast(src, policy, parent);
+	static handle from_cpp(ExplainType src, rv_policy policy, cleanup_list *cleanup) noexcept {
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 

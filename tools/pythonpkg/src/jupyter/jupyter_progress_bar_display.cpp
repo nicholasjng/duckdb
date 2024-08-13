@@ -9,7 +9,7 @@ unique_ptr<ProgressBarDisplay> JupyterProgressBarDisplay::Create() {
 }
 
 void JupyterProgressBarDisplay::Initialize() {
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	auto float_progress_attr = import_cache.ipywidgets.FloatProgress();
 	D_ASSERT(float_progress_attr.ptr() != nullptr);
 	// Initialize the progress bar

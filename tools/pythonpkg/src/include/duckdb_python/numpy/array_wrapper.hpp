@@ -52,7 +52,7 @@ public:
 	void Resize(idx_t new_capacity);
 	void Append(idx_t current_offset, Vector &input, idx_t source_size, idx_t source_offset = 0,
 	            idx_t count = DConstants::INVALID_INDEX);
-	nb::object ToArray() const;
+	nb::ndarray<nb::numpy> ToArray() const;
 };
 
 } // namespace duckdb

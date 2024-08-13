@@ -276,7 +276,7 @@ struct UUIDConvert {
 	template <class DUCKDB_T, class NUMPY_T>
 	static PyObject *ConvertValue(hugeint_t val, NumpyAppendData &append_data) {
 		(void)append_data;
-		auto &import_cache = *DuckDBPyConnection::import_Cache();
+		auto &import_cache = *DuckDBPyConnection::ImportCache();
 		nb::handle h = import_cache.uuid.UUID()(UUID::ToString(val)).release();
 		return h.ptr();
 	}
@@ -373,7 +373,10 @@ struct MapConvert {
 	static nb::dict ConvertValue(Vector &input, idx_t chunk_offset, NumpyAppendData &append_data) {
 		auto &client_properties = append_data.client_properties;
 		auto val = input.GetValue(chunk_offset);
-		return PythonObject::FromValue(val, input.GetType(), client_properties);
+		// FIXME: does not accept a bare return of FromValue due to implicit conversion errors
+		nb::dict retval;
+		retval.update(PythonObject::FromValue(val, input.GetType(), client_properties));
+		return retval;
 	}
 };
 
@@ -763,7 +766,7 @@ void ArrayWrapper::Append(idx_t current_offset, Vector &input, idx_t source_size
 	mask->count += count;
 }
 
-nb::object ArrayWrapper::ToArray() const {
+nb::ndarray<nb::numpy> ArrayWrapper::ToArray() const {
 	D_ASSERT(data->array && mask->array);
 	data->Resize(data->count);
 	if (!requires_mask) {

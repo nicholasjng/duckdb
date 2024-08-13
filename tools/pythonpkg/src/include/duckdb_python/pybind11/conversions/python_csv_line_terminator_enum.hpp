@@ -54,23 +54,23 @@ namespace detail {
 
 template <>
 struct type_caster<PythonCSVLineTerminator::Type> : public type_caster_base<PythonCSVLineTerminator::Type> {
-	using base = type_caster_base<PythonCSVLineTerminator::Type>;
-	PythonCSVLineTerminator::Type tmp;
+    NB_TYPE_CASTER(PythonCSVLineTerminator::Type, "PythonCSVLineTerminatorType")
+
+    using base = type_caster_base<PythonCSVLineTerminator::Type>;
 
 public:
-	bool load(handle src, bool convert) {
-		if (base::load(src, convert)) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
 		} else if (nb::isinstance<nb::str>(src)) {
-			tmp = duckdb::PythonCSVLineTerminator::FromString(nb::str(src));
-			value = &tmp;
+			value = duckdb::PythonCSVLineTerminator::FromString(nb::cast<string>(src));
 			return true;
 		}
 		return false;
 	}
 
-	static handle cast(PythonCSVLineTerminator::Type src, return_value_policy policy, handle parent) {
-		return base::cast(src, policy, parent);
+	static handle from_cpp(PythonCSVLineTerminator::Type src, rv_policy policy, cleanup_list *cleanup) noexcept {
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 

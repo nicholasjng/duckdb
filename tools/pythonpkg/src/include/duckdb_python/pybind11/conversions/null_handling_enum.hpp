@@ -38,27 +38,29 @@ namespace detail {
 
 template <>
 struct type_caster<FunctionNullHandling> : public type_caster_base<FunctionNullHandling> {
+    NB_TYPE_CASTER(FunctionNullHandling, const_name("FunctionNullHandling"))
+
 	using base = type_caster_base<FunctionNullHandling>;
 	FunctionNullHandling tmp;
 
 public:
-	bool load(handle src, bool convert) {
-		if (base::load(src, convert)) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
 		} else if (nb::isinstance<nb::str>(src)) {
-			tmp = FunctionNullHandlingFromString(nb::str(src));
-			value = &tmp;
+			tmp = FunctionNullHandlingFromString(nb::cast<string>(src));
+			value = tmp;
 			return true;
 		} else if (nb::isinstance<nb::int_>(src)) {
-			tmp = FunctionNullHandlingFromInteger(src.cast<int64_t>());
-			value = &tmp;
+			tmp = FunctionNullHandlingFromInteger(nb::cast<int64_t>(src));
+			value = tmp;
 			return true;
 		}
 		return false;
 	}
 
-	static handle cast(FunctionNullHandling src, return_value_policy policy, handle parent) {
-		return base::cast(src, policy, parent);
+	static handle from_cpp(FunctionNullHandling src, rv_policy policy, cleanup_list *cleanup) noexcept {
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 

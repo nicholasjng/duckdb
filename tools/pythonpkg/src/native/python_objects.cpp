@@ -42,15 +42,15 @@ interval_t PyTimeDelta::ToInterval() {
 }
 
 int64_t PyTimeDelta::GetDays(nb::handle &obj) {
-	return nb::int_(obj.attr("days")).cast<int64_t>();
+	return nb::cast<int64_t>(nb::int_(obj.attr("days")));
 }
 
 int64_t PyTimeDelta::GetSeconds(nb::handle &obj) {
-	return nb::int_(obj.attr("seconds")).cast<int64_t>();
+	return nb::cast<int64_t>(nb::int_(obj.attr("seconds")));
 }
 
 int64_t PyTimeDelta::GetMicros(nb::handle &obj) {
-	return nb::int_(obj.attr("microseconds")).cast<int64_t>();
+	return nb::cast<int64_t>(nb::int_(obj.attr("microseconds")));
 }
 
 PyDecimal::PyDecimal(nb::handle &obj) : obj(obj) {
@@ -62,7 +62,7 @@ PyDecimal::PyDecimal(nb::handle &obj) : obj(obj) {
 	auto sign = nb::cast<int8_t>(as_tuple.attr("sign"));
 	signed_value = sign != 0;
 
-	auto decimal_digits = as_tuple.attr("digits");
+	nb::tuple decimal_digits = as_tuple.attr("digits");
 	auto width = nb::len(decimal_digits);
 	digits.reserve(width);
 	for (auto digit : decimal_digits) {
@@ -113,7 +113,7 @@ static void ExponentNotRecognized() {
 // LCOV_EXCL_STOP
 
 void PyDecimal::SetExponent(nb::handle &exponent) {
-	if (nb::isinstance<nb::int_>(exponent)) {
+	if (nanobind::isinstance<nb::int_>(exponent)) {
 		this->exponent_value = nb::cast<int32_t>(exponent);
 		if (this->exponent_value >= 0) {
 			exponent_type = PyDecimalExponentType::EXPONENT_POWER;
@@ -123,8 +123,8 @@ void PyDecimal::SetExponent(nb::handle &exponent) {
 		exponent_type = PyDecimalExponentType::EXPONENT_SCALE;
 		return;
 	}
-	if (nb::isinstance<nb::str>(exponent)) {
-		string exponent_string = nb::str(exponent);
+	if (nanobind::isinstance<nb::str>(exponent)) {
+		string exponent_string = nb::cast<string>(nb::str(exponent));
 		if (exponent_string == "n") {
 			exponent_type = PyDecimalExponentType::EXPONENT_NAN;
 			return;
@@ -159,7 +159,7 @@ Value PyDecimalCastSwitch(PyDecimal &decimal, uint8_t width, uint8_t scale) {
 
 // Wont fit in a DECIMAL, fall back to DOUBLE
 static Value CastToDouble(nb::handle &obj) {
-	string converted = nb::str(obj);
+	string converted = nb::cast<string>(nb::str(obj));
 	string_t decimal_string(converted);
 	double double_val;
 	bool try_cast = TryCast::Operation<string_t, double>(decimal_string, double_val, true);
@@ -386,14 +386,14 @@ nb::object PythonObject::FromStruct(const Value &val, const LogicalType &type,
 
 	auto &child_types = StructType::GetChildTypes(type);
 	if (StructType::IsUnnamed(type)) {
-		nb::tuple py_tuple(struct_values.size());
+		nb::list py_list;
 		for (idx_t i = 0; i < struct_values.size(); i++) {
 			auto &child_entry = child_types[i];
 			D_ASSERT(child_entry.first.empty());
 			auto &child_type = child_entry.second;
-			py_tuple[i] = FromValue(struct_values[i], child_type, client_properties);
+			py_list.append(FromValue(struct_values[i], child_type, client_properties));
 		}
-		return std::move(py_tuple);
+		return std::move(nb::tuple(py_list));
 	} else {
 		nb::dict py_struct;
 		for (idx_t i = 0; i < struct_values.size(); i++) {
@@ -460,7 +460,7 @@ static bool KeyIsHashable(const LogicalType &type) {
 
 nb::object PythonObject::FromValue(const Value &val, const LogicalType &type,
                                    const ClientProperties &client_properties) {
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	if (val.IsNull()) {
 		return nb::none();
 	}
@@ -502,7 +502,7 @@ nb::object PythonObject::FromValue(const Value &val, const LogicalType &type,
 	case LogicalTypeId::VARCHAR:
 		return nb::cast(StringValue::Get(val));
 	case LogicalTypeId::BLOB:
-		return nb::bytes(StringValue::Get(val));
+		return nb::bytes(StringValue::Get(val).c_str());
 	case LogicalTypeId::BIT:
 		return nb::cast(Bit::ToString(StringValue::Get(val)));
 	case LogicalTypeId::TIMESTAMP:
@@ -544,7 +544,7 @@ nb::object PythonObject::FromValue(const Value &val, const LogicalType &type,
 			py_timestamp = nb::steal<nb::object>(python_conversion);
 		} catch (nb::python_error &e) {
 			// Failed to convert, fall back to str
-			return nb::str(val.ToString());
+			return nb::str(val.ToString().c_str());
 		}
 		if (type.id() == LogicalTypeId::TIMESTAMP_TZ) {
 			// We have to add the timezone info
@@ -571,7 +571,7 @@ nb::object PythonObject::FromValue(const Value &val, const LogicalType &type,
 			py_time = nb::steal<nb::object>(python_conversion);
 		} catch (nb::python_error &e) {
 			// Failed to convert, fall back to str
-			return nb::str(val.ToString());
+			return nb::str(val.ToString().c_str());
 		}
 		// We have to add the timezone info
 		auto timedelta = import_cache.datetime.timedelta()(nb::arg("seconds") = offset);
@@ -592,7 +592,7 @@ nb::object PythonObject::FromValue(const Value &val, const LogicalType &type,
 			}
 			return nb::steal<nb::object>(pytime);
 		} catch (nb::python_error &e) {
-			return nb::str(val.ToString());
+			return nb::str(val.ToString().c_str());
 		}
 	}
 	case LogicalTypeId::DATE: {
@@ -613,7 +613,7 @@ nb::object PythonObject::FromValue(const Value &val, const LogicalType &type,
 			}
 			return nb::steal<nb::object>(pydate);
 		} catch (nb::python_error &e) {
-			return nb::str(val.ToString());
+			return nb::str(val.ToString().c_str());
 		}
 	}
 	case LogicalTypeId::LIST: {
@@ -637,12 +637,12 @@ nb::object PythonObject::FromValue(const Value &val, const LogicalType &type,
 		// because the return type of ArrayType::GetSize is idx_t,
 		// which is typedef'd to uint64_t and ssize_t is 4 bytes with Emscripten
 		// and pybind11 requires that the input be castable to ssize_t
-		nb::tuple arr(static_cast<nb::ssize_t>(array_size));
+		nb::list arr;
 
 		for (idx_t elem_idx = 0; elem_idx < array_size; elem_idx++) {
-			arr[elem_idx] = FromValue(array_values[elem_idx], child_type, client_properties);
+			arr.append(FromValue(array_values[elem_idx], child_type, client_properties));
 		}
-		return std::move(arr);
+		return std::move(nb::tuple(arr));
 	}
 	case LogicalTypeId::MAP: {
 		auto &list_values = ListValue::GetChildren(val);

@@ -17,7 +17,7 @@ struct RawArrayWrapper {
 
 	explicit RawArrayWrapper(const LogicalType &type);
 
-	nb::array array;
+	nb::ndarray<> array;
 	data_ptr_t data;
 	LogicalType type;
 	idx_t type_width;

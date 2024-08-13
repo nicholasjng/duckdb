@@ -215,7 +215,7 @@ static void InitializeMetaQueries(nb::class_<DuckDBPyRelation> &m) {
 }
 
 void DuckDBPyRelation::Initialize(nb::handle &m) {
-	auto relation_module = nb::class_<DuckDBPyRelation>(m, "DuckDBPyRelation", nb::module_local());
+	auto relation_module = nb::class_<DuckDBPyRelation>(m, "DuckDBPyRelation");
 	InitializeReadOnlyProperties(relation_module);
 	InitializeAggregates(relation_module);
 	InitializeWindowOperators(relation_module);

@@ -27,7 +27,7 @@ namespace pyarrow {
 
 class RecordBatchReader : public nb::object {
 public:
-	RecordBatchReader(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	RecordBatchReader(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
@@ -38,7 +38,7 @@ public:
 };
 class Table : public nb::object {
 public:
-	Table(const nb::object &o) : nb::object(o, borrowed_t {}) {
+	Table(const nb::object &o) : nb::object(o, nb::detail::borrow_t {}) {
 	}
 	using nb::object::object;
 
@@ -83,16 +83,3 @@ private:
 	                                 ArrowStreamParameters &parameters, const ClientProperties &client_properties);
 };
 } // namespace duckdb
-
-namespace nanobind {
-namespace detail {
-template <>
-struct handle_type_name<duckdb::pyarrow::RecordBatchReader> {
-	static constexpr auto name = _("pyarrow.lib.RecordBatchReader");
-};
-template <>
-struct handle_type_name<duckdb::pyarrow::Table> {
-	static constexpr auto name = _("pyarrow.lib.Table");
-};
-} // namespace detail
-} // namespace nanobind

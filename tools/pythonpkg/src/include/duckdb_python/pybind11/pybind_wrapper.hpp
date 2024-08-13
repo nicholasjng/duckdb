@@ -9,6 +9,11 @@
 #pragma once
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/list.h>
+#include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/vector.h>
 #include "duckdb/common/vector.hpp"
 #include "duckdb/common/assert.hpp"
 #include "duckdb/common/helper.hpp"
@@ -35,24 +40,6 @@ namespace nb {
 
 // We include everything from nanobind
 using namespace nanobind;
-
-// But we have the option to override certain functions
-template <typename T, detail::enable_if_t<std::is_base_of<object, T>::value, int> = 0>
-bool isinstance(handle obj) {
-	return T::check_(obj);
-}
-
-template <typename T, detail::enable_if_t<!std::is_base_of<object, T>::value, int> = 0>
-bool isinstance(handle obj) {
-	return detail::isinstance_generic(obj, typeid(T));
-}
-
-template <>
-inline bool isinstance<handle>(handle) = delete;
-template <>
-inline bool isinstance<object>(handle obj) {
-	return obj.ptr() != nullptr;
-}
 
 inline bool isinstance(handle obj, handle type) {
 	if (type.ptr() == nullptr) {

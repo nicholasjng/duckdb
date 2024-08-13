@@ -143,7 +143,7 @@ unique_ptr<TableRef> PythonReplacementScan::TryReplacementObject(const nb::objec
 }
 
 static bool IsBuiltinFunction(const nb::object &object) {
-	auto &import_cache_py = *DuckDBPyConnection::import_Cache();
+	auto &import_cache_py = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache_py.types.BuiltinFunctionType());
 }
 

@@ -92,7 +92,7 @@ void DuckDBPyConnection::DetectEnvironment() {
 	}
 
 	// Check to see if we are in a Jupyter Notebook
-	auto &import_cache_py = *DuckDBPyConnection::import_Cache();
+	auto &import_cache_py = *DuckDBPyConnection::ImportCache();
 	auto get_ipython = import_cache_py.IPython.get_ipython();
 	if (get_ipython.ptr() == nullptr) {
 		// Could either not load the IPython module, or it has no 'get_ipython' attribute
@@ -399,7 +399,7 @@ DuckDBPyConnection::RegisterScalarUDF(const string &name, const nb::callable &ud
 
 void DuckDBPyConnection::Initialize(nb::handle &m) {
 	auto connection_module =
-	    nb::class_<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>>(m, "DuckDBPyConnection", nb::module_local());
+	    nb::class_<DuckDBPyConnection, shared_ptr<DuckDBPyConnection>>(m, "DuckDBPyConnection");
 
 	connection_module.def("__enter__", &DuckDBPyConnection::Enter)
 	    .def("__exit__", &DuckDBPyConnection::Exit, nb::arg("exc_type"), nb::arg("exc"), nb::arg("traceback"));
@@ -410,7 +410,7 @@ void DuckDBPyConnection::Initialize(nb::handle &m) {
 	                                        "Get result set attributes, mainly column names");
 	connection_module.def_property_readonly("rowcount", &DuckDBPyConnection::GetRowcount, "Get result set row count");
 	PyDateTime_IMPORT; // NOLINT
-	DuckDBPyConnection::import_Cache();
+	DuckDBPyConnection::ImportCache();
 }
 
 shared_ptr<DuckDBPyConnection> DuckDBPyConnection::ExecuteMany(const nb::object &query, nb::object params_p) {
@@ -1723,7 +1723,7 @@ case_insensitive_map_t<Value> TransformPyConfigDict(const nb::dict &py_config_di
 }
 
 static bool HasJupyterProgressBarDependencies() {
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	if (!import_cache.ipywidgets()) {
 		// ipywidgets not installed, needed to support the progress bar
 		return false;
@@ -1791,7 +1791,7 @@ bool IsDefaultConnectionString(const string &database, bool read_only, case_inse
 }
 
 static string GetPathString(const nb::object &path) {
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	const bool is_path = nb::isinstance(path, import_cache.pathlib.Path());
 	if (is_path || nb::isinstance<nb::str>(path)) {
 		return std::string(nb::str(path));
@@ -1857,7 +1857,7 @@ shared_ptr<DuckDBPyConnection> DuckDBPyConnection::DefaultConnection() {
 	return default_connection;
 }
 
-PythonImportCache *DuckDBPyConnection::import_Cache() {
+PythonImportCache *DuckDBPyConnection::ImportCache() {
 	if (!import_cache) {
 		import_cache = make_shared_ptr<PythonImportCache>();
 	}
@@ -1907,7 +1907,7 @@ bool DuckDBPyConnection::IsPandasDataframe(const nb::object &object) {
 	if (!ModuleIsLoaded<PandasCacheItem>()) {
 		return false;
 	}
-	auto &import_cache_py = *DuckDBPyConnection::import_Cache();
+	auto &import_cache_py = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache_py.pandas.DataFrame());
 }
 
@@ -1915,7 +1915,7 @@ bool DuckDBPyConnection::IsPolarsDataframe(const nb::object &object) {
 	if (!ModuleIsLoaded<PolarsCacheItem>()) {
 		return false;
 	}
-	auto &import_cache_py = *DuckDBPyConnection::import_Cache();
+	auto &import_cache_py = *DuckDBPyConnection::ImportCache();
 	return nb::isinstance(object, import_cache_py.polars.DataFrame()) ||
 	       nb::isinstance(object, import_cache_py.polars.LazyFrame());
 }
@@ -1923,7 +1923,7 @@ bool DuckDBPyConnection::IsPolarsDataframe(const nb::object &object) {
 bool IsValidNumpyDimensions(const nb::handle &object, int &dim) {
 	// check the dimensions of numpy arrays
 	// should only be called by IsAcceptedNumpyObject
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	if (!nb::isinstance(object, import_cache.numpy.ndarray())) {
 		return false;
 	}
@@ -1939,7 +1939,7 @@ NumpyObjectType DuckDBPyConnection::IsAcceptedNumpyObject(const nb::object &obje
 	if (!ModuleIsLoaded<NumpyCacheItem>()) {
 		return NumpyObjectType::INVALID;
 	}
-	auto &import_cache = *DuckDBPyConnection::import_Cache();
+	auto &import_cache = *DuckDBPyConnection::ImportCache();
 	if (nb::isinstance(object, import_cache.numpy.ndarray())) {
 		auto len = nb::len((nb::cast<nb::array>(object)).attr("shape"));
 		switch (len) {
@@ -1974,7 +1974,7 @@ bool DuckDBPyConnection::IsAcceptedArrowObject(const nb::object &object) {
 	if (!ModuleIsLoaded<PyarrowCacheItem>()) {
 		return false;
 	}
-	auto &import_cache_py = *DuckDBPyConnection::import_Cache();
+	auto &import_cache_py = *DuckDBPyConnection::ImportCache();
 	if (nb::isinstance(object, import_cache_py.pyarrow.Table()) ||
 	    nb::isinstance(object, import_cache_py.pyarrow.RecordBatchReader())) {
 		return true;

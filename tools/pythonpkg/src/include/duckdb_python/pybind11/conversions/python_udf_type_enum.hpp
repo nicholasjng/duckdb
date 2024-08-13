@@ -44,27 +44,26 @@ namespace detail {
 
 template <>
 struct type_caster<PythonUDFType> : public type_caster_base<PythonUDFType> {
+    NB_TYPE_CASTER(PythonUDFType, const_name("PythonUDFType"))
+
 	using base = type_caster_base<PythonUDFType>;
-	PythonUDFType tmp;
 
 public:
-	bool load(handle src, bool convert) {
-		if (base::load(src, convert)) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
 		} else if (nb::isinstance<nb::str>(src)) {
-			tmp = PythonUDFTypeFromString(nb::str(src));
-			value = &tmp;
+			value = PythonUDFTypeFromString(nb::cast<string>(src));
 			return true;
 		} else if (nb::isinstance<nb::int_>(src)) {
-			tmp = PythonUDFTypeFromInteger(src.cast<int64_t>());
-			value = &tmp;
+			value = PythonUDFTypeFromInteger(nb::cast<int64_t>(src));
 			return true;
 		}
 		return false;
 	}
 
-	static handle cast(PythonUDFType src, return_value_policy policy, handle parent) {
-		return base::cast(src, policy, parent);
+	static handle from_cpp(PythonUDFType src, rv_policy policy, cleanup_list *cleanup) {
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 

@@ -44,28 +44,28 @@ static nb::list PyTokenize(const string &query) {
 	auto tokens = Parser::Tokenize(query);
 	nb::list result;
 	for (auto &token : tokens) {
-		auto tuple = nb::tuple(2);
-		tuple[0] = token.start;
+	    PySQLTokenType typ;
 		switch (token.type) {
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_IDENTIFIER:
-			tuple[1] = PY_SQL_TOKEN_IDENTIFIER;
+			typ = PY_SQL_TOKEN_IDENTIFIER;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_NUMERIC_CONSTANT:
-			tuple[1] = PY_SQL_TOKEN_NUMERIC_CONSTANT;
+			typ = PY_SQL_TOKEN_NUMERIC_CONSTANT;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_STRING_CONSTANT:
-			tuple[1] = PY_SQL_TOKEN_STRING_CONSTANT;
+			typ = PY_SQL_TOKEN_STRING_CONSTANT;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_OPERATOR:
-			tuple[1] = PY_SQL_TOKEN_OPERATOR;
+			typ = PY_SQL_TOKEN_OPERATOR;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_KEYWORD:
-			tuple[1] = PY_SQL_TOKEN_KEYWORD;
+			typ = PY_SQL_TOKEN_KEYWORD;
 			break;
 		case SimplifiedTokenType::SIMPLIFIED_TOKEN_COMMENT:
-			tuple[1] = PY_SQL_TOKEN_COMMENT;
+			typ = PY_SQL_TOKEN_COMMENT;
 			break;
 		}
+		auto tuple = nb::make_tuple(token.start, typ);
 		result.append(tuple);
 	}
 	return result;
@@ -660,7 +660,7 @@ static void InitializeConnectionMethods(nb::module_ &m) {
 		    }
 		    return conn->ReadCSV(name, kwargs);
 	    },
-	    "Create a relation object from the CSV file in 'name'", nb::arg("path_or_buffer"), nb::kw_only());
+	    "Create a relation object from the CSV file in 'name'", nb::arg("path_or_buffer"), nb::arg("kwargs"));
 	m.def(
 	    "from_csv_auto",
 	    [](const nb::object &name, nb::kwargs &kwargs) {
@@ -672,7 +672,7 @@ static void InitializeConnectionMethods(nb::module_ &m) {
 		    }
 		    return conn->ReadCSV(name, kwargs);
 	    },
-	    "Create a relation object from the CSV file in 'name'", nb::arg("path_or_buffer"), nb::kw_only());
+	    "Create a relation object from the CSV file in 'name'", nb::arg("path_or_buffer"), nb::arg("kwargs"));
 	m.def(
 	    "from_df",
 	    [](const PandasDataFrame &value, shared_ptr<DuckDBPyConnection> conn = nullptr) {
@@ -831,8 +831,8 @@ static void InitializeConnectionMethods(nb::module_ &m) {
 		    }
 		    return conn->FromDF(df)->Project(args, groups);
 	    },
-	    "Project the relation object by the projection in project_expr", nb::arg("df"), nb::kw_only(),
-	    nb::arg("groups") = "", nb::arg("connection") = nb::none());
+	    "Project the relation object by the projection in project_expr", nb::arg("df"), nb::arg("args"),
+		nb::kw_only(), nb::arg("groups") = "", nb::arg("connection") = nb::none());
 	m.def(
 	    "distinct",
 	    [](const PandasDataFrame &df, shared_ptr<DuckDBPyConnection> conn = nullptr) {
@@ -1066,8 +1066,6 @@ NB_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
 	DuckDBPyConnection::Initialize(m);
 	PythonObject::Initialize();
 
-	nb::options pybind_opts;
-
 	m.doc() = "DuckDB is an embeddable SQL OLAP Database Management System";
 	m.attr("__package__") = "duckdb";
 	m.attr("__version__") = std::string(DuckDB::LibraryVersion()).substr(1);
@@ -1087,12 +1085,12 @@ NB_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
 	m.def("connect", &DuckDBPyConnection::Connect,
 	      "Create a DuckDB database instance. Can take a database file name to read/write persistent data and a "
 	      "read_only flag if no changes are desired",
-	      nb::arg("database") = ":memory:", nb::arg("read_only") = false, nb::arg_v("config", nb::dict(), "None"));
+	      nb::arg("database") = ":memory:", nb::arg("read_only") = false, nb::arg("config").none() = nb::dict());
 	m.def("tokenize", PyTokenize,
 	      "Tokenizes a SQL string, returning a list of (position, type) tuples that can be "
 	      "used for e.g. syntax highlighting",
 	      nb::arg("query"));
-	nb::enum_<PySQLTokenType>(m, "token_type", nb::module_local())
+	nb::enum_<PySQLTokenType>(m, "token_type")
 	    .value("identifier", PySQLTokenType::PY_SQL_TOKEN_IDENTIFIER)
 	    .value("numeric_const", PySQLTokenType::PY_SQL_TOKEN_NUMERIC_CONSTANT)
 	    .value("string_const", PySQLTokenType::PY_SQL_TOKEN_STRING_CONSTANT)
@@ -1102,10 +1100,7 @@ NB_MODULE(DUCKDB_PYTHON_LIB_NAME, m) { // NOLINT
 	    .export_values();
 
 	// we need this because otherwise we try to remove registered_dfs on shutdown when python is already dead
-	auto clean_default_connection = []() {
-		DuckDBPyConnection::Cleanup();
-	};
-	m.add_object("_clean_default_connection", nb::capsule(clean_default_connection));
+	m.def("_clean_default_connection", []() -> void * { DuckDBPyConnection::Cleanup(); });
 }
 
 } // namespace duckdb

@@ -332,7 +332,7 @@ public:
 	ScalarFunction GetFunction(const nb::callable &udf, PythonExceptionHandling exception_handling, bool side_effects,
 	                           const ClientProperties &client_properties) {
 
-		auto &import_cache = *DuckDBPyConnection::import_Cache();
+		auto &import_cache = *DuckDBPyConnection::ImportCache();
 		// Import this module, because importing this from a non-main thread causes a segfault
 		(void)import_cache.numpy.core.multiarray();
 

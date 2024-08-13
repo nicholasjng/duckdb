@@ -17,17 +17,17 @@ struct type_caster<Optional<T>> : public type_caster_base<Optional<T>> {
 	Optional<T> tmp;
 
 public:
-	bool load(handle src, bool convert) {
-		if (base::load(src, convert)) {
+	bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept {
+		if (base::from_python(src, flags, cleanup)) {
 			return true;
-		} else if (child::load(src, convert)) {
+		} else if (child::from_python(src, flags, cleanup)) {
 			return true;
 		}
 		return false;
 	}
 
-	static handle cast(Optional<T> src, return_value_policy policy, handle parent) {
-		return base::cast(src, policy, parent);
+	static handle from_cpp(Optional<T> src, rv_policy policy, cleanup_list *cleanup) noexcept {
+		return base::from_cpp(src, policy, cleanup);
 	}
 };
 

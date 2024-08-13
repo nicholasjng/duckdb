@@ -21,7 +21,7 @@ public:
 
 	void Append(DataChunk &chunk);
 
-	nb::object ToArray(idx_t col_idx) {
+	nb::ndarray<nb::numpy> ToArray(idx_t col_idx) {
 		return owned_data[col_idx].ToArray();
 	}
 	bool ToPandas() const {

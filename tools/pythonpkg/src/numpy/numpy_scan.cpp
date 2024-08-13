@@ -333,7 +333,7 @@ void NumpyScan::Scan(PandasColumnBindData &bind_data, idx_t count, idx_t offset,
 		auto tgt_ptr = FlatVector::GetData<string_t>(out);
 		auto &out_mask = FlatVector::Validity(out);
 		unique_ptr<PythonGILWrapper> gil;
-		auto &import_cache = *DuckDBPyConnection::import_Cache();
+		auto &import_cache = *DuckDBPyConnection::ImportCache();
 
 		// Loop over every row of the arrays contents
 		auto stride = numpy_col.stride;
